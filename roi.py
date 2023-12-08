@@ -27,7 +27,8 @@ class RoiReader:
 
 
 class RoiEmulator:
-    def include(self):
+    @staticmethod
+    def include(bbox):
         return True
 
 

@@ -1,3 +1,6 @@
 vscode/
 *.json
 __pycache__/
+data/*
+weights/*
+*.pt
