@@ -1,15 +1,19 @@
-import cv2 as cv
-from ultralytics import YOLO
-import sys
+import numpy as np
 import math
+
+import sys
 from os.path import join
+from pathlib import Path
+
 from person import Person
 from roi import RoiReaderEmulator
-import numpy as np
-from boxmot import DeepOCSORT
-from pathlib import Path
-import torch
 from result_writer import ResultWriter
+
+import cv2 as cv
+from ultralytics import YOLO
+from boxmot import DeepOCSORT
+import torch
+
 
 if len(sys.argv) < 3:
     raise ValueError("NAME OF VIDEO FILE WASN'T GIVEN")
@@ -26,8 +30,6 @@ model_name = sys.argv[2]
 model_file = join('./weights',model_name)
 model = YOLO(model_file)
 
-
-# this should be a real roi reader 
 roi_reader = RoiReaderEmulator()
 roi1,roi2 = roi_reader.load()
 
