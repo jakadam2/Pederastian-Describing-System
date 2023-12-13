@@ -4,7 +4,7 @@ from os.path import join
 
 class RoiReaderEmulator:
     @staticmethod
-    def load(*args,**kwargs):
+    def load(*args,**kwargs) -> None:
         return RoiEmulator(),RoiEmulator()
 
 
@@ -15,7 +15,7 @@ class RoiReader:
         self._size_x = x
         self._size_y = y
 
-    def load(self,roi_path):
+    def load(self,roi_path) -> None:
         path = join('./config',roi_path)
         with open(path) as f:
             config = json.load(f)
@@ -28,7 +28,7 @@ class RoiReader:
 
 class RoiEmulator:
     @staticmethod
-    def include(bbox):
+    def include(bbox) -> bool:
         return True
 
 
