@@ -31,41 +31,7 @@ class PAR(nn.Module):
         bag = self.bag(features)
         gender = self.gender(features)
         return torch.stack((upper_color,lower_color,gender,hat,bag))
-
-
-class BinaryMobilnetClassifier(nn.Module):
-
-    def __init__(self,extractor) -> None:
-        super(BinaryMobilnetClassifier,self).__init__()
-        self.extractor = extractor
-        for param in self.extractor.parameters():
-            param.requires_grad = False
-        self.nl = nn.Sequential(nn.AvgPool2d(kernel_size = (7,7)),
-                                nn.Flatten(1),
-                                nn.Dropout(0.2),
-                                nn.Linear(in_features=1280,out_features=1),
-                                nn.Sigmoid())
-
-    def forward(self,x):
-        features = self.extractor(x)
-        result = self.nl(features)
-        return result
-    
-
-class MultiMobilnetClassifier(nn.Module):
-
-    def __init__(self,extractor,n_labels) -> None:
-        super(MultiMobilnetClassifier,self).__init__()
-        self.extractor = extractor
-        for param in self.extractor.parameters():
-            param.requires_grad = False
-        self.nl = nn.Sequential(nn.Linear(1280,n_labels),nn.Softmax(1))
-
-    def forward(self,x):
-        features = self.extractor(x)
-        
-        return self.nl(features)
-    
+   
 
 class ImageDataset(Dataset):
 
@@ -73,18 +39,21 @@ class ImageDataset(Dataset):
 
     def __init__(self, annotations_file, img_dir,class_name, transform=None, target_transform=None,):
         self.img_labels = pd.read_csv(annotations_file)
+        self.img_labels = self.img_labels.sample(frac=1)
         self.img_labels = self.img_labels.query(f'{class_name} != -1')
         self.img_dir = img_dir
         self.transform = transform
         self.target_transform = target_transform
         self.class_name = class_name
+        self.pll = transforms.Compose([transforms.PILToTensor()])
 
     def __len__(self):
         return len(self.img_labels)
 
     def __getitem__(self, idx):
         img_path = os.path.join(self.img_dir, self.img_labels.iloc[idx, 0])
-        image = read_image(img_path).to(torch.float32)
+        image = Image.open(img_path)
+        image = self.pll(image).to(torch.float32)
         label = self.img_labels.iloc[idx, ImageDataset.classes_name[self.class_name]].astype(np.float32)
         
         if self.transform:
