@@ -6,3 +6,4 @@ weights/*
 *.pt
 *.txt
 PAR/*.ipynb
+PAR/data
