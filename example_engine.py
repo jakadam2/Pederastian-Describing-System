@@ -14,6 +14,10 @@ from ultralytics import YOLO
 from boxmot import DeepOCSORT
 import torch
 
+from PAR.convnext_extractor import ConvexNextExtractor
+from PAR.gender_classifier import GenderClassiefierBig
+from torchvision.models import ConvNeXt_Small_Weights as cw
+
 
 if len(sys.argv) < 3:
     raise ValueError("NAME OF VIDEO FILE WASN'T GIVEN")
@@ -43,9 +47,17 @@ tracker = DeepOCSORT(
     fp16=True,
 )
 
+feature_extractor = ConvexNextExtractor()
+par_model = GenderClassiefierBig(feature_extractor).to('cuda')
+par_model.load_state_dict(torch.load('./weights/gender_classifier_big.pt'))
+par_model.eval()
+
+transform = cw.IMAGENET1K_V1.transforms()
+
 while True:
 
     success,img = cap.read()
+    img = cv.flip(img,0)
     if success == False:
         print('END')
         break
@@ -69,6 +81,13 @@ while True:
         # showing bbox
         bbox = track[0:4].astype(int)
         id = track[4].astype(int)
+        x1, y1, x2, y2 = bbox
+        extract = orig_img[y1 + 1:y2 -1,x1 + 1:x2 - 1]
+        extract = torch.from_numpy(extract.astype(np.float32))
+        extract = extract.permute(2,0,1)
+        extract = transform(extract).to('cuda').unsqueeze(0)
+        
+        gender = par_model(extract)
         img = cv.rectangle(
                 img,
                 (bbox[0], bbox[1]),
@@ -78,7 +97,7 @@ while True:
             )
         cv.putText(
                 img,
-                f'id: {id}',
+                f'id: {id} {round(float(gender),2)}',
                 (bbox[0], bbox[1]-10),
                 cv.FONT_HERSHEY_SIMPLEX,
                 fontscale,

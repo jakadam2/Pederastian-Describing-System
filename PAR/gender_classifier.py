@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import torchvision.models as models
-from cbam import CBAM
+from PAR.cbam import CBAM
 import torch.nn.functional as F
 
 

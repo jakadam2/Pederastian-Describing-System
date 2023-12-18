@@ -41,7 +41,7 @@ def train(epochs,LR = 10 ** -3) -> None:
         epoch_loss = train_one_epoch(train_loader,optimizer,model,criterion)
         print(f'LOSS: {epoch_loss}')
     print('TRAINING FINISHED')
-    torch.save(model.state_dict(),'resbig.pt')
+    torch.save(model.state_dict(),'resbigba.pt')
 
 if __name__ == '__main__':
     train(13)
