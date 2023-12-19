@@ -1,9 +1,9 @@
 import torch.nn as nn
 import torch
 import torchvision.models as models
-from resnet_extractor import Resnet50Extractor
-from gender_classifier import GenderClassiefierResNet
-from par_utils import ImageDataset
+from PAR.resnet_extractor import Resnet50Extractor
+from PAR.gender_classifier import GenderClassiefierResNet
+from PAR.par_utils import ImageDataset
 
 
 def train_one_epoch(train_loader,optimizer,model,loss_fn):

@@ -1,9 +1,9 @@
 import torch.nn as nn
 import torch
 import torchvision.models as models
-from convnext_extractor import ConvexNextExtractor
-from gender_classifier import GenderClassiefierBig
-from par_utils import ImageDataset
+from PAR.convnext_extractor import ConvexNextExtractor
+from PAR.gender_classifier import GenderClassiefierBig
+from PAR.par_utils import ImageDataset
 
 
 def train_one_epoch(train_loader,optimizer,model,loss_fn):
