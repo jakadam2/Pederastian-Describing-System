@@ -5,9 +5,9 @@ import sys
 from os.path import join
 from pathlib import Path
 
-from person import Person
-from roi import RoiReaderEmulator
-from result_writer import ResultWriter
+from TOOLS.person import Person
+from TOOLS.roi import RoiReaderEmulator
+from TOOLS.result_writer import ResultWriter
 
 import cv2 as cv
 from ultralytics import YOLO
