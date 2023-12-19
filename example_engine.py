@@ -14,9 +14,9 @@ from ultralytics import YOLO
 from boxmot import DeepOCSORT
 import torch
 
-from PAR.convnext_extractor import ConvexNextExtractor
-from PAR.gender_classifier import GenderClassiefierBig
-from torchvision.models import ConvNeXt_Small_Weights as cw
+from PAR.resnet_extractor import Resnet50Extractor
+from PAR.gender_classifier import GenderClassiefierResNet
+from torchvision.models import ResNet50_Weights as rw
 
 
 if len(sys.argv) < 3:
@@ -47,12 +47,12 @@ tracker = DeepOCSORT(
     fp16=True,
 )
 
-feature_extractor = ConvexNextExtractor()
-par_model = GenderClassiefierBig(feature_extractor).to('cuda')
-par_model.load_state_dict(torch.load('./weights/gender_classifier_big.pt'))
+feature_extractor = Resnet50Extractor()
+par_model = GenderClassiefierResNet(feature_extractor).to('cuda')
+par_model.load_state_dict(torch.load('./weights/resnetgender.pt'))
 par_model.eval()
 
-transform = cw.IMAGENET1K_V1.transforms()
+transform = rw.IMAGENET1K_V2.transforms()
 
 while True:
 
