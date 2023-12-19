@@ -5,14 +5,18 @@ import sys
 from os.path import join
 from pathlib import Path
 
-from person import Person
-from roi import RoiReaderEmulator
-from result_writer import ResultWriter
+from TOOLS.person import Person
+from TOOLS.roi import RoiReaderEmulator
+from TOOLS.result_writer import ResultWriter
 
 import cv2 as cv
 from ultralytics import YOLO
 from boxmot import DeepOCSORT
 import torch
+
+from PAR.resnet_extractor import Resnet50Extractor
+from PAR.gender_classifier import GenderClassiefierResNet
+from torchvision.models import ResNet50_Weights as rw
 
 
 if len(sys.argv) < 3:
@@ -43,9 +47,17 @@ tracker = DeepOCSORT(
     fp16=True,
 )
 
+feature_extractor = Resnet50Extractor()
+par_model = GenderClassiefierResNet(feature_extractor).to('cuda')
+par_model.load_state_dict(torch.load('./weights/resnetgender.pt'))
+par_model.eval()
+
+transform = rw.IMAGENET1K_V2.transforms()
+
 while True:
 
     success,img = cap.read()
+    img = cv.flip(img,0)
     if success == False:
         print('END')
         break
@@ -69,22 +81,7 @@ while True:
         # showing bbox
         bbox = track[0:4].astype(int)
         id = track[4].astype(int)
-        img = cv.rectangle(
-                img,
-                (bbox[0], bbox[1]),
-                (bbox[2], bbox[3]),
-                color,
-                thickness
-            )
-        cv.putText(
-                img,
-                f'id: {id}',
-                (bbox[0], bbox[1]-10),
-                cv.FONT_HERSHEY_SIMPLEX,
-                fontscale,
-                color,
-                thickness
-            )
+        
         # features
         if roi1.include(bbox) or roi2.include(bbox):
             if id not in detected.keys(): # that means that we see this pearson first time 
@@ -96,10 +93,38 @@ while True:
                 # it's only my concept so it could be done better
                 # extract is a signle person 
                 detected[id] = Person(int(id)) # this object should store info about person
-            # rois needs additional thinking because now it vunerable on blinking bboxies
+                extract = orig_img[y1 + 1:y2 -1,x1 + 1:x2 - 1]
+                extract = torch.from_numpy(extract.astype(np.float32))
+                extract = extract.permute(2,0,1)
+                extract = transform(extract).to('cuda').unsqueeze(0)
+                gender_ratio = par_model(extract)
+                if gender_ratio > 0.5:
+                    detected[id].gender = 'female'
+                else:
+                    detected[id].gender = 'male'
+
+        # rois needs additional thinking because now it vunerable on blinking bboxies
             detected[id].is_in_roi1(roi1.include(bbox))
             detected[id].is_in_roi2(roi2.include(bbox))
-            present_people.add(id)
+            present_people.add(id)  
+
+        img = cv.rectangle(
+                img,
+                (bbox[0], bbox[1]),
+                (bbox[2], bbox[3]),
+                color,
+                thickness
+            )
+        cv.putText(
+                img,
+                f'id: {id} {detected[id].gender}',
+                (bbox[0], bbox[1]-10),
+                cv.FONT_HERSHEY_SIMPLEX,
+                fontscale,
+                color,
+                thickness
+            )
+        
 
     for id in detected:
         if id not in present_people:
@@ -114,3 +139,5 @@ for id in detected:
     detected[id].is_in_roi2(False)   
     
 result_writer.write_ans(detected.values())
+
+# TODO: think about when and how decide about pederastian features !!!!!!!!!!!!!!!!!!!

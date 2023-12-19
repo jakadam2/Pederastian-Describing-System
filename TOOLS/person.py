@@ -16,6 +16,7 @@ class Person:
         self.roi2_time = 0.0
         self.roi1_passes = 0
         self.roi2_passes = 0
+        self.upper_color = 'unknown'
         self._inroi1 = False
         self._inroi2 = False
 
@@ -31,7 +32,7 @@ class Person:
         self._roi1_ptime = perf_counter()
         self._inroi1 = True
 
-    def _stopRoi1(self):
+    def _stopRoi1(self) -> None:
         if not self._inroi1:
             raise LookupError(f'{self} is not in roi1')
         
@@ -39,13 +40,13 @@ class Person:
         self.roi1_passes += 1
         self._inroi1 = False
 
-    def _startRoi2(self):
+    def _startRoi2(self) -> None:
         if self._inroi2:
             raise LookupError(f'{self} is already in roi2')
         self._roi2_ptime = perf_counter()
         self._inroi2 = True
 
-    def _stopRoi2(self):
+    def _stopRoi2(self) -> None:
         if not self._inroi2:
             raise LookupError(f'{self} is not in roi2')
         
@@ -53,7 +54,7 @@ class Person:
         self.roi2_passes += 1
         self._inroi2 = False
 
-    def is_in_roi1(self,presence):
+    def is_in_roi1(self,presence) -> None:
         if presence == self._inroi1:
             return
         elif presence == True:
@@ -61,7 +62,7 @@ class Person:
         else:
             self._stopRoi1()
 
-    def is_in_roi2(self,presence):
+    def is_in_roi2(self,presence) -> None:
         if presence == self._inroi2:
             return
         elif presence == True:
