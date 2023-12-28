@@ -1,4 +1,5 @@
 from time import perf_counter
+from TOOLS.annoucer import TextAnnoucer
 
 class Person:
 
@@ -9,7 +10,7 @@ class Person:
         *every loop in detector object was given a presence of each roi
     IMPORTANT: to know idea about the names look at the comment in ResultWritter file
     '''
-    def __init__(self,id,) -> None:
+    def __init__(self,id) -> None:
         # here should be all of features
         self.id = id
         self.roi1_time = 0.0
@@ -19,6 +20,7 @@ class Person:
         self.upper_color = 'unknown'
         self._inroi1 = False
         self._inroi2 = False
+        self._annoucer = TextAnnoucer()
 
     def __str__(self) -> str:
         return f'Person({self.id})'
@@ -31,6 +33,7 @@ class Person:
             raise LookupError(f'{self} is already in roi1')
         self._roi1_ptime = perf_counter()
         self._inroi1 = True
+        self._annoucer.annouce(self.id,'roi1')
 
     def _stopRoi1(self) -> None:
         if not self._inroi1:
@@ -45,6 +48,7 @@ class Person:
             raise LookupError(f'{self} is already in roi2')
         self._roi2_ptime = perf_counter()
         self._inroi2 = True
+        self._annoucer.annouce(self.id,'roi2')
 
     def _stopRoi2(self) -> None:
         if not self._inroi2:
