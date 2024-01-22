@@ -5,7 +5,7 @@ data/*
 weights/*
 *.pt
 *.txt
-PAR/*.ipynb
+*.ipynb
 PAR/data
 *.jpg
 *.jpeg
