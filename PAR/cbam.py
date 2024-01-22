@@ -26,7 +26,7 @@ class ChannelModule(nn.Module):
         score_max = self.dl(max.view(b,c)).view(b, c, 1, 1)
         score_avg = self.dl(avg.view(b,c)).view(b, c, 1, 1)
         join_score = score_max + score_avg
-        return F.sigmoid(join_score)*x
+        return torch.sigmoid(join_score)*x
 
 
 class SpatialModule(nn.Module):
@@ -40,7 +40,7 @@ class SpatialModule(nn.Module):
             avg = torch.mean(x,1).unsqueeze(1)
             concat = torch.cat((max,avg), dim=1)
             output = self.conv(concat)
-            return F.sigmoid(output) * x         
+            return torch.sigmoid(output) * x         
 
 
 class CBAM(nn.Module):

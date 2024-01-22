@@ -1,10 +1,11 @@
 import torch.nn as nn
 from PAR.cbam import CBAM
-    
-class GenderClassiefier(nn.Module):
+import torch
+
+class BinaryClassiefier(nn.Module):
     
     def __init__(self) -> None:
-        super(GenderClassiefier,self).__init__()
+        super(BinaryClassiefier,self).__init__()
         self.attention_module = CBAM(768)
         self.dl1 = nn.Linear(3072,1024)
         self.bn1 = nn.BatchNorm1d(1024)
@@ -18,7 +19,6 @@ class GenderClassiefier(nn.Module):
         self.avg_pool = nn.AvgPool2d((3,3))
         self.relu = nn.ReLU()
         self.flatten = nn.Flatten()
-        self.sigmoid = nn.Sigmoid()
 
     def forward(self,x):
         features = self.attention_module(x)
@@ -38,5 +38,5 @@ class GenderClassiefier(nn.Module):
         features = self.relu(features)
         features = self.dropout(features)
         features = self.dl5(features)
-        features = self.sigmoid(features)
+        features = torch.sigmoid(features)
         return features

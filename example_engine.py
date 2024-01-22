@@ -15,7 +15,7 @@ from boxmot import DeepOCSORT
 import torch
 
 from PAR.resnet_extractor import Resnet50Extractor
-from PAR.gender_classifier import GenderClassiefierResNet
+from PAR.binary_classifier import GenderClassiefierResNet
 from torchvision.models import ResNet50_Weights as rw
 from torchvision.transforms.functional import adjust_contrast
 

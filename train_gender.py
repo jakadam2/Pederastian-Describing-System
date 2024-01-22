@@ -2,7 +2,7 @@ import torch.nn as nn
 import torch
 import torchvision.models as models
 from PAR.convnext_extractor import ConvexNextExtractor
-from PAR.gender_classifier import GenderClassiefier
+from PAR.binary_classifier import BinaryClassiefier
 from PAR.par_utils import ImageDataset
 
 
@@ -31,7 +31,7 @@ def train_one_epoch(train_loader,optimizer,model,loss_fn,extractor):
 def train(epochs,LR = 10 ** -3) -> None:
     criterion = nn.BCELoss()
     extractor = ConvexNextExtractor()
-    model = GenderClassiefier().to('cuda')
+    model = BinaryClassiefier().to('cuda')
     optimizer = torch.optim.AdamW(params=filter(lambda p: p.requires_grad, model.parameters()),lr = LR)
     transform = models.ConvNeXt_Small_Weights.IMAGENET1K_V1.transforms()
     train_data = ImageDataset('./data/par_datasets/training_set.txt','./data/par_datasets/training_set',class_name='gender' ,transform=transform)
@@ -46,4 +46,4 @@ def train(epochs,LR = 10 ** -3) -> None:
     torch.save(model.state_dict(),'./weights/gender_model.pt')
 
 if __name__ == '__main__':
-    train(13)
+    train(15)
