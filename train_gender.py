@@ -29,6 +29,7 @@ def train_one_epoch(train_loader,optimizer,model,loss_fn,extractor):
 
 
 def train(epochs,LR = 10 ** -3) -> None:
+    f = open('./raports/train_gender_raport.txt','w+')
     criterion = nn.BCELoss()
     extractor = ConvexNextExtractor()
     model = BinaryClassiefier().to('cuda')
@@ -38,11 +39,16 @@ def train(epochs,LR = 10 ** -3) -> None:
     train_loader = torch.utils.data.DataLoader(train_data,batch_size=64)
     model.train(True)
     print('START TRAINING')
+    f.write('START TRAINING\n')
     for epoch in range(epochs):
         print(f'EPOCH {epoch + 1}')
+        f.write(f'EPOCH {epoch + 1}\n')
         epoch_loss = train_one_epoch(train_loader,optimizer,model,criterion,extractor)
         print(f'LOSS: {epoch_loss}')
+        f.write(f'LOSS: {epoch_loss}\n')
     print('TRAINING FINISHED')
+    f.write('TRAINING FINISHED')
+    f.close()
     torch.save(model.state_dict(),'./weights/gender_model.pt')
 
 if __name__ == '__main__':
