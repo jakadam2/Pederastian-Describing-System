@@ -11,12 +11,9 @@ import numpy as np
 
 class PAR(nn.Module):
 
-    def __init__(self,upper_color,lower_color,gender,hat,bag) -> None:
+    def __init__(self,extractor,upper_color,lower_color,gender,hat,bag) -> None:
         super(PAR, self).__init__()
-        self.extractor = torch.hub.load('pytorch/vision:v0.10.0', 'mobilenet_v2', pretrained=True)
-        self.extractor.eval()
-        self.extractor = nn.Sequential(*list(self.extractor.children())[:-1])
-
+        self.extractor = extractor
         self.upper_color = upper_color
         self.lower_color = lower_color
         self.gender = gender
