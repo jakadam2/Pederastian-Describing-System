@@ -8,6 +8,7 @@ from pathlib import Path
 from TOOLS.person import Person
 from TOOLS.roi import RoiReaderEmulator
 from TOOLS.result_writer import ResultWriter
+from TOOLS.roi import RoiReader
 
 import cv2 as cv
 from ultralytics import YOLO
@@ -37,6 +38,8 @@ model = YOLO(model_file)
 
 roi_reader = RoiReaderEmulator()
 roi1,roi2 = roi_reader.load()
+
+roi11,roi12 = RoiReader(1080,1920).load('roi.txt')
 
 detected = {}
 result_writer = ResultWriter('ex.json')
@@ -75,36 +78,34 @@ while True:
 
     tracks= tracker.update(detections,orig_img)
     present_people = set()
+
     for track in tracks:
-        # showing bbox
         bbox = track[0:4].astype(int)
         id = track[4].astype(int)
-        # features
-        if roi1.include(bbox) or roi2.include(bbox):
-            if id not in detected.keys(): # that means that we see this pearson first time 
-                x1, y1, x2, y2 = bbox
-                extract = orig_img[y1 + 1:y2 -1,x1 + 1:x2 - 1]
-                # here should be referencing extract img to a model regonizning other features
-                # and writing this features to object by maybe a nice property 
-                # for now only feature is id another features will be added with models detectin it
-                # it's only my concept so it could be done better
-                # extract is a signle person 
-                detected[id] = Person(int(id)) # this object should store info about person
-                extract = orig_img[y1 + 1:y2 -1,x1 + 1:x2 - 1]
-                #extract = cv.convertScaleAbs(extract,alpha = 1.2, beta = - 50)
-                extract = torch.from_numpy(extract.astype(np.float32))
-                extract = extract.permute(2,0,1)
-                extract = transform(extract).to('cuda').unsqueeze(0)
-                features = feature_extractor(extract)
-                gender_ratio = gender_model(features)
-                if gender_ratio > 0.5:
-                    detected[id].gender = 'female'
-                else:
-                    detected[id].gender = 'male'
-        # rois needs additional thinking because now it vunerable on blinking bboxies
-        detected[id].is_in_roi1(roi1.include(bbox))
-        detected[id].is_in_roi2(roi2.include(bbox))
+
+        if id not in detected.keys(): # that means that we see this pearson first time 
+            x1, y1, x2, y2 = bbox
+            extract = orig_img[y1 + 1:y2 -1,x1 + 1:x2 - 1]
+            detected[id] = Person(int(id)) # this object should store info about person
+            extract = orig_img[y1 + 1:y2 -1,x1 + 1:x2 - 1]
+            extract = torch.from_numpy(extract.astype(np.float32))
+            extract = extract.permute(2,0,1)
+            extract = transform(extract).to('cuda').unsqueeze(0)
+            features = feature_extractor(extract)
+            gender_ratio = gender_model(features)
+            if gender_ratio > 0.5:
+                detected[id].gender = 'female'
+            else:
+                detected[id].gender = 'male'
+
+        detected[id].is_in_roi1(roi11.include(bbox))
+        detected[id].is_in_roi2(roi12.include(bbox))
         present_people.add(id)  
+        
+        if roi11.include(bbox) or roi12.include(bbox): 
+            color  = (255, 0, 0)
+        else:
+            color = (0, 0, 255) 
 
         img = cv.rectangle(
                 img,
@@ -128,6 +129,23 @@ while True:
         if id not in present_people:
             detected[id].is_in_roi1(False)
             detected[id].is_in_roi2(False)
+
+
+    img = cv.rectangle(
+            img,
+            roi11.bbox[0],
+            roi11.bbox[1],
+            (0,  255,0),
+            3
+        )
+    
+    img = cv.rectangle(
+        img,
+        roi12.bbox[0],
+        roi12.bbox[1],
+        (0,  255,0),
+        3
+    )
 
     cv.imshow('People Detection Video',img)
     cv.waitKey(1)

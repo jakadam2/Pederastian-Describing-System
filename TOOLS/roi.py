@@ -35,7 +35,7 @@ class RoiEmulator:
 class Roi:
     # x1,y1 left uppper corner
     # x2,y2 right bottom corner
-    def __init__(self,x1,y1,w,h,image_sizex,image_sizey) -> None:
+    def __init__(self,x1,y1,w,h,image_sizey,image_sizex) -> None:
         self._x = x1 * image_sizex
         self._y = y1 * image_sizey
         self._w = w * image_sizex
@@ -43,6 +43,10 @@ class Roi:
 
     def __include_point(self,x,y) -> bool:
         return x >= self._x and x <= self._x + self._w and y >= self._y and y <= self._y + self._h
+    
+    @property
+    def bbox(self):
+        return ((int(self._x),int(self._y)),(int(self._x + self._w),int(self._y + self._h)))
 
     def include(self,bbox) -> bool:       
         #bbox format: [x1,y1,x2,y2]

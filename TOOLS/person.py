@@ -76,15 +76,10 @@ class Person:
     def is_in_roi2(self,presence) -> None:
         if presence == self._inroi2:
             return
-        
-        elif presence:
-            self._pass_time2 = 0
+        elif presence == True:
             self._startRoi2()
-
         else:
-            self._pass_time2 += 1
-            if self._pass_time2 == self._tollerance_time:
-                self._stopRoi2()
+            self._stopRoi2()
 
     def end_rois(self):
         if self._inroi1:
