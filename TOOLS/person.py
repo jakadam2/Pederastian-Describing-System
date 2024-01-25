@@ -2,7 +2,6 @@ from time import perf_counter
 from TOOLS.annoucer import TextAnnoucer
 
 class Person:
-
     '''
     Idea of counting a time:
         *every entry is a start of parctial timer and after exit from roi partial time from partial time will be added to global timer
@@ -21,6 +20,9 @@ class Person:
         self._inroi1 = False
         self._inroi2 = False
         self._annoucer = TextAnnoucer()
+        self._tollerance_time = 15
+        self._pass_time1 = 0
+        self._pass_time1 = 0
 
     def __str__(self) -> str:
         return f'Person({self.id})'
@@ -61,15 +63,31 @@ class Person:
     def is_in_roi1(self,presence) -> None:
         if presence == self._inroi1:
             return
-        elif presence == True:
+        
+        elif presence:
+            self._pass_time1 = 0
             self._startRoi1()
+
         else:
-            self._stopRoi1()
+            self._pass_time1 += 1
+            if self._pass_time1 == self._tollerance_time:
+                self._stopRoi1()
 
     def is_in_roi2(self,presence) -> None:
         if presence == self._inroi2:
             return
-        elif presence == True:
+        
+        elif presence:
+            self._pass_time2 = 0
             self._startRoi2()
+
         else:
+            self._pass_time2 += 1
+            if self._pass_time2 == self._tollerance_time:
+                self._stopRoi2()
+
+    def end_rois(self):
+        if self._inroi1:
+            self._stopRoi1()
+        if self._inroi2:
             self._stopRoi2()

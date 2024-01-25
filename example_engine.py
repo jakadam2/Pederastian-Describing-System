@@ -102,9 +102,9 @@ while True:
                 else:
                     detected[id].gender = 'male'
         # rois needs additional thinking because now it vunerable on blinking bboxies
-            detected[id].is_in_roi1(roi1.include(bbox))
-            detected[id].is_in_roi2(roi2.include(bbox))
-            present_people.add(id)  
+        detected[id].is_in_roi1(roi1.include(bbox))
+        detected[id].is_in_roi2(roi2.include(bbox))
+        present_people.add(id)  
 
         img = cv.rectangle(
                 img,
@@ -133,8 +133,8 @@ while True:
     cv.waitKey(1)
 
 for id in detected:
-    detected[id].is_in_roi1(False)
-    detected[id].is_in_roi2(False)   
+    detected[id].end_rois()
+   
     
 result_writer.write_ans(detected.values())
 
