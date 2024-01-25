@@ -14,9 +14,9 @@ from ultralytics import YOLO
 from boxmot import DeepOCSORT
 import torch
 
-from PAR.resnet_extractor import Resnet50Extractor
-from PAR.binary_classifier import GenderClassiefierResNet
-from torchvision.models import ResNet50_Weights as rw
+from PAR.convnext_extractor import ConvexNextExtractor
+from PAR.binary_classifier import BinaryClassiefier
+from torchvision.models import ConvNeXt_Small_Weights as cw
 from torchvision.transforms.functional import adjust_contrast
 
 
@@ -47,18 +47,15 @@ tracker = DeepOCSORT(
     fp16=True,
 )
 
-feature_extractor = Resnet50Extractor()
-par_model = GenderClassiefierResNet(feature_extractor).to('cuda')
-par_model.load_state_dict(torch.load('./weights/resnetgender.pt'))
-par_model.eval()
-
-transform = rw.IMAGENET1K_V2.transforms()
+feature_extractor = ConvexNextExtractor()
+gender_model = BinaryClassiefier().to('cuda')
+gender_model.load_state_dict(torch.load('./weights/gender_model.pt'))
+gender_model.eval()
+transform = cw.IMAGENET1K_V1.transforms()
 
 while True:
 
     success,img = cap.read()
-    mmimg = img.copy()
-    img = cv.convertScaleAbs(img,alpha = 0.2, beta = 150)
     if success == False:
         print('END')
         break
@@ -98,7 +95,8 @@ while True:
                 extract = torch.from_numpy(extract.astype(np.float32))
                 extract = extract.permute(2,0,1)
                 extract = transform(extract).to('cuda').unsqueeze(0)
-                gender_ratio = par_model(extract)
+                features = feature_extractor(extract)
+                gender_ratio = gender_model(features)
                 if gender_ratio > 0.5:
                     detected[id].gender = 'female'
                 else:
@@ -132,7 +130,6 @@ while True:
             detected[id].is_in_roi2(False)
 
     cv.imshow('People Detection Video',img)
-    cv.imshow('People Detection Vidgggeo',mmimg)
     cv.waitKey(1)
 
 for id in detected:
