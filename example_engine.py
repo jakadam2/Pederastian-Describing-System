@@ -15,10 +15,10 @@ from ultralytics import YOLO
 from boxmot import DeepOCSORT
 import torch
 
-from PAR.convnext_extractor import ConvexNextExtractor
-from PAR.binary_classifier import BinaryClassiefier
-from torchvision.models import ConvNeXt_Small_Weights as cw
-from torchvision.transforms.functional import adjust_contrast
+from PAR.multi_task import MTPAR
+from torchvision.models import ResNet18_Weights as rw
+from PAR.multi_task import PredicitonParser
+
 
 
 if len(sys.argv) < 3:
@@ -50,17 +50,11 @@ tracker = DeepOCSORT(
     fp16=True,
 )
 
-feature_extractor = ConvexNextExtractor()
-gender_model = BinaryClassiefier().to('cuda')
-gender_model.load_state_dict(torch.load('./weights/gender_model.pt'))
-gender_model.eval()
-bag_model = BinaryClassiefier().to('cuda')
-bag_model.load_state_dict(torch.load('./weights/bag_model.pt'))
-bag_model.eval()
-hat_model = BinaryClassiefier().to('cuda')
-hat_model.load_state_dict(torch.load('./weights/hat_model.pt'))
-hat_model.eval()
-transform = cw.IMAGENET1K_V1.transforms()
+par_model = MTPAR()
+par_model.load_state_dict(torch.load('./weights/multi_model.pt'))
+par_model.eval()
+transform = rw.IMAGENET1K_V1.transforms()
+parser = PredicitonParser()
 
 while True:
 
@@ -97,25 +91,8 @@ while True:
             extract = torch.from_numpy(extract.astype(np.float32))
             extract = extract.permute(2,0,1)
             extract = transform(extract).to('cuda').unsqueeze(0)
-            features = feature_extractor(extract)
-            gender_ratio = gender_model(features)
-            bag_ratio = bag_model(features)
-            hat_ratio = hat_model(features)
-
-            if gender_ratio > 0.5:
-                detected[id].gender = 'female'
-            else:
-                detected[id].gender = 'male'
-
-            if hat_ratio > 0.5:
-                detected[id].hat = True
-            else:
-                detected[id].hat = False
-
-            if bag_ratio > 0.5:
-                detected[id].bag = True
-            else:
-                detected[id].bag = False
+            predicts = par_model(extract)
+            parser.parse_to_person(detected[id],predicts)
 
         detected[id].is_in_roi1(roi11.include(bbox))
         detected[id].is_in_roi2(roi12.include(bbox))
@@ -136,7 +113,7 @@ while True:
         cv.putText(
                 img,
                 f'id: {id} {detected[id].gender}',
-                (bbox[0], bbox[1]-23),
+                (bbox[0], bbox[1]-36),
                 cv.FONT_HERSHEY_SIMPLEX,
                 fontscale,
                 color,
@@ -145,13 +122,21 @@ while True:
         cv.putText(
                 img,
                 f'hat:{detected[id].hat} bag:{detected[id].bag}',
-                (bbox[0], bbox[1]-10),
+                (bbox[0], bbox[1]-23),
                 cv.FONT_HERSHEY_SIMPLEX,
                 fontscale,
                 color,
                 1
             )     
-        
+        cv.putText(
+                img,
+                f'U:{detected[id].upper_color} L:{detected[id].lower_color}',
+                (bbox[0], bbox[1]-10),
+                cv.FONT_HERSHEY_SIMPLEX,
+                fontscale,
+                color,
+                1
+            )      
 
     for id in detected:
         if id not in present_people:
