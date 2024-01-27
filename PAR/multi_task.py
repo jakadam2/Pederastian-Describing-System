@@ -8,13 +8,10 @@ class MTPartClassifier(nn.Module):
 
     def __init__(self,nclasses) -> None:
         super(MTPartClassifier,self).__init__()
-        self.attention_module = CBAM(768)
-        self.dl1 = nn.Linear(3072,1024)
-        self.bn1 = nn.BatchNorm1d(1024)
-        self.dl2 = nn.Linear(1024,128)
-        self.bn2 = nn.BatchNorm1d(128)
-        self.dl3 = nn.Linear(128,64)
-        self.dl4 = nn.Linear(64,nclasses)
+        self.attention_module = CBAM(512)
+        self.dl1 = nn.Linear(2048,128)
+        self.bn1 = nn.BatchNorm1d(128)
+        self.dl2 = nn.Linear(128,nclasses)
         self.dropout = nn.Dropout(0.3)
         self.avg_pool = nn.AvgPool2d((3,3))
         self.relu = nn.ReLU()
@@ -29,12 +26,6 @@ class MTPartClassifier(nn.Module):
         features = self.bn1(features)
         features = self.dropout(features)
         features = self.dl2(features)
-        features = self.bn2(features)
-        features = self.dropout(features)
-        features = self.dl3(features)
-        features = self.dropout(features)
-        features = self.relu(features)
-        features = self.dl4(features)
         return features
     
 
@@ -42,8 +33,9 @@ class MTPAR(nn.Module):
 
     def __init__(self,device = 'cuda') -> None:
         super(MTPAR,self).__init__()
-        model = models.convnext_tiny(models.ConvNeXt_Tiny_Weights.IMAGENET1K_V1).to(device)
-        return_node = {'features.7.1' :'add'}
+        return_node = {'layer4.1':'relu_1'}
+        model = models.resnet18(models.ResNet18_Weights.IMAGENET1K_V1).to(device)
+        self.extractor = create_feature_extractor(model, return_node)
         self.extractor = create_feature_extractor(model, return_node)
         self.upper_color = MTPartClassifier(11).to(device)
         self.lower_color = MTPartClassifier(11).to(device)
@@ -52,7 +44,7 @@ class MTPAR(nn.Module):
         self.gender = MTPartClassifier(2).to(device)
 
     def forward(self,x):
-        features = self.extractor(x)['add']
+        features = self.extractor(x)['relu_1']
         bag = self.bag(features)
         hat = self.hat(features)
         gender = self.gender(features)
@@ -78,7 +70,6 @@ class MTLoss(nn.Module):
             mask = labels[:,i] != -1
             cum_loss += self._loss(predicts[:,j:j + MTLoss.steps[i] + 1][mask],labels[:,i][mask])
             j += MTLoss.steps[i]
-        print(cum_loss)
         return cum_loss
 
     

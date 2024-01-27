@@ -28,11 +28,11 @@ def train_one_epoch(train_loader,optimizer,model,loss_fn):
 
 
 def train(epochs,LR = 10 ** -3) -> None:
-    f = open('./raports/train_bag_raport.txt','w+')
+    f = open('./raports/train_multi_raport.txt','w+')
     criterion = MTLoss()
     model = MTPAR()
     optimizer = torch.optim.AdamW(params=filter(lambda p: p.requires_grad, model.parameters()),lr = LR)
-    transform = models.ConvNeXt_Small_Weights.IMAGENET1K_V1.transforms()
+    transform = models.ResNet18_Weights.IMAGENET1K_V1.transforms()
     train_data = MTImageDataset('./data/par_datasets/training_set.txt','./data/par_datasets/training_set' ,transform=transform)
     train_loader = torch.utils.data.DataLoader(train_data,batch_size=64)
     model.train(True)
