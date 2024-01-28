@@ -2,12 +2,14 @@ import torch.nn as nn
 from PAR.cbam import CBAM
 import torch
 
-class BinaryClassiefier(nn.Module):
+class BinaryClassifier(nn.Module):
     
     def __init__(self) -> None:
-        super(BinaryClassiefier,self).__init__()
-        self.attention_module = CBAM(768)
-        self.dl1 = nn.Linear(3072,1024)
+        super(BinaryClassifier,self).__init__()
+        # self.attention_module = CBAM(768)
+        self.attention_module = CBAM(2048)
+        # self.dl1 = nn.Linear(3072,1024)
+        self.dl1 = nn.Linear(8192,1024)
         self.bn1 = nn.BatchNorm1d(1024)
         self.dl2 = nn.Linear(1024,512)
         self.bn2 = nn.BatchNorm1d(512)

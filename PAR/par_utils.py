@@ -52,7 +52,10 @@ class ImageDataset(Dataset):
         image = Image.open(img_path)
         image = self.pll(image).to(torch.float32)
         label = self.img_labels.iloc[idx, ImageDataset.classes_name[self.class_name]].astype(np.float32)
-        
+        if label[0] != -1:
+            label[0] -= 1
+        if label[1] != -1:
+            label[1] -= 1   
         if self.transform:
             image = self.transform(image)
         if self.target_transform:
