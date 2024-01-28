@@ -70,19 +70,21 @@ class bgRemover():
 
 # ----------- USAGE ---------------
 
-# def main(): 
-#     img_path = 'test.png'
-#     out_path = 'output.jpg'
-#     out_tensor_path = 'out_tensor.jpg'
+def main(): 
+    img_path = 'test.png'
+    out_path = 'output.jpg'
+    out_tensor_path = 'out_tensor.jpg'
 
-#     bgr = bgRemover()
-#     bgr.bgr_img(img_path, out_path)
-#     tensor = bgr._img2tensor(img_path, normalization=False)
-#     out = bgr.bgr_tensor(tensor)
-#     bgr._tensor2img(out, out_tensor_path)
+    bgr = bgRemover()
+    # from image 
+    bgr.bgr_img(img_path, out_path)
+    # from tensor 
+    tensor = bgr._img2tensor(img_path, normalization=False) # creates a tensr for test 
+    out = bgr.bgr_tensor(tensor)
+    bgr._tensor2img(out, out_tensor_path)
 
-# if __name__ == '__main__':
-#     main()
+if __name__ == '__main__':
+    main()
 
 
 
