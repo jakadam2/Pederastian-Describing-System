@@ -6,7 +6,6 @@ from os.path import join
 from pathlib import Path
 
 from TOOLS.person import Person
-from TOOLS.roi import RoiReaderEmulator
 from TOOLS.result_writer import ResultWriter
 from TOOLS.roi import RoiReader
 
@@ -19,30 +18,27 @@ from PAR.multi_task import MTPAR
 from torchvision.models import ResNet18_Weights as rw
 from PAR.multi_task import PredicitonParser
 
+from TOOLS.argparser import Parser
 
-
-if len(sys.argv) < 3:
-    raise ValueError("NAME OF VIDEO FILE WASN'T GIVEN")
+parser = Parser()
+arguments = parser.parse()
 
 color = (0, 0, 255)
 thickness = 2
 fontscale = 0.5
 
-video_name = sys.argv[1]
+video_name = arguments.video
 viedo_file = join('./data','videos',video_name)
 cap = cv.VideoCapture(viedo_file)
 
-model_name = sys.argv[2]
-model_file = join('./weights',model_name)
+
+model_file = join('./weights','yolov8l.pt')
 model = YOLO(model_file)
 
-roi_reader = RoiReaderEmulator()
-roi1,roi2 = roi_reader.load()
-
-roi11,roi12 = RoiReader(1080,1920).load('roi.txt')
+roi1,roi2 = RoiReader(1080,1920).load(arguments.configuration)
 
 detected = {}
-result_writer = ResultWriter('ex.json')
+result_writer = ResultWriter(arguments.results)
 
 tracker = DeepOCSORT( 
     model_weights= Path('./weights/osnet_ain_x1_0_msmt17.pt'), # which ReID model to use
@@ -60,7 +56,6 @@ while True:
 
     success,img = cap.read()
     if success == False:
-        print('END')
         break
 
     orig_img = img.copy()
@@ -94,11 +89,11 @@ while True:
             predicts = par_model(extract)
             parser.parse_to_person(detected[id],predicts)
 
-        detected[id].is_in_roi1(roi11.include(bbox))
-        detected[id].is_in_roi2(roi12.include(bbox))
+        detected[id].is_in_roi1(roi1.include(bbox))
+        detected[id].is_in_roi2(roi2.include(bbox))
         present_people.add(id)  
         
-        if roi11.include(bbox) or roi12.include(bbox): 
+        if roi1.include(bbox) or roi2.include(bbox): 
             color  = (255, 0, 0)
         else:
             color = (0, 0, 255) 
@@ -146,16 +141,16 @@ while True:
 
     img = cv.rectangle(
             img,
-            roi11.bbox[0],
-            roi11.bbox[1],
+            roi1.bbox[0],
+            roi1.bbox[1],
             (0,  255,0),
             3
         )
     
     img = cv.rectangle(
         img,
-        roi12.bbox[0],
-        roi12.bbox[1],
+        roi2.bbox[0],
+        roi2.bbox[1],
         (0,  255,0),
         3
     )
@@ -165,8 +160,7 @@ while True:
 
 for id in detected:
     detected[id].end_rois()
-   
-    
+      
 result_writer.write_ans(detected.values())
 
 # TODO: think about when and how decide about pederastian features !!!!!!!!!!!!!!!!!!!

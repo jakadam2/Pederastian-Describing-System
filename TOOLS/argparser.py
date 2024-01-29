@@ -1,6 +1,6 @@
 import argparse
 
-class parser(): 
+class Parser(): 
 
     def __init__(self): 
         parser = argparse.ArgumentParser(description='AV parser')
