@@ -86,8 +86,8 @@ while True:
             extract = torch.from_numpy(extract.astype(np.float32))
             extract = extract.permute(2,0,1)
             extract = transform(extract).to('cuda').unsqueeze(0)
-            predicts = par_model(extract)
-            parser.parse_to_person(detected[id],predicts)
+            upper_color,lower_color,gender,hat_presence ,bag_presence  = par_model(extract)
+            parser.parse_to_person(detected[id],[upper_color,lower_color,gender,hat_presence ,bag_presence ])
 
         detected[id].is_in_roi1(roi1.include(bbox))
         detected[id].is_in_roi2(roi2.include(bbox))

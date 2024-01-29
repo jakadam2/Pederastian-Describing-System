@@ -47,7 +47,7 @@ def train(epochs,LR = 10 ** -3) -> None:
     print('TRAINING FINISHED')
     f.write('TRAINING FINISHED')
     f.close()
-    torch.save(model.state_dict(),'./weights/multi_model.pt')
+    torch.save(model.state_dict(),'./weights/multitask_model.pt')
 
 if __name__ == '__main__':
     train(13)
