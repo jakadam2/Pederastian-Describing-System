@@ -73,25 +73,25 @@ class bgRemover():
 
 # ----------- USAGE ---------------
 
-def main(): 
-    img_path = 'test.png'
-    out_path = 'output.jpg'
-    out_tensor_path = 'out_tensor.jpg'
-    green=[0, 1, 0]
-    black=[0, 0, 0]
-    white=[1, 1, 1]
+# def main(): 
+#     img_path = 'test.png'
+#     out_path = 'output.jpg'
+#     out_tensor_path = 'out_tensor.jpg'
+#     green=[0, 1, 0]
+#     black=[0, 0, 0]
+#     white=[1, 1, 1]
 
-    bgr = bgRemover()
-    # from image 
-    bgr.bgr_img(img_path, out_path, white)
-    # from tensor 
-    tensor = bgr._img2tensor(img_path, normalization=False) # creates a tensr for test 
-    out = bgr.bgr_tensor(tensor, green)
-    bgr._tensor2img(out, out_tensor_path)
+#     bgr = bgRemover()
+#     # from image 
+#     bgr.bgr_img(img_path, out_path, white)
+#     # from tensor 
+#     tensor = bgr._img2tensor(img_path, normalization=False) # creates a tensr for test 
+#     out = bgr.bgr_tensor(tensor, green)
+#     bgr._tensor2img(out, out_tensor_path)
 
 
-if __name__ == '__main__':
-    main()
+# if __name__ == '__main__':
+#     main()
 
 
 
