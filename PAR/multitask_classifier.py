@@ -94,3 +94,28 @@ class MTLoss(nn.Module):
                 cum_loss += self._binary_loss(output,labels[:,j][mask])
 
         return cum_loss
+    
+
+class PredicitonParser:
+    
+    color_dict = {0:'black', 1: 'blue',2:'brown',3: 'gray', 4:'green', 5:'orange', 6:'pink', 7:'purple', 8:'red', 9:'white',10: 'yellow'}
+    gender_dict = {0:'male',1:'female'}
+    bag_dict = {0:False,1:True}
+    hat_dict = {0:False,1:True}
+
+    def parse_to_person(self,person,predicts):
+        person.upper_color = int(torch.argmax(F.softmax(predicts[0], dim=1)))
+        person.lower_color = int(torch.argmax(F.softmax(predicts[1], dim=1)))
+        person.gender = int(torch.where(predicts[2] > .5, 1.0, 0.0))
+        person.hat = int(torch.where(predicts[3] > .5, 1.0, 0.0))
+        person.bag = int(torch.where(predicts[4] > .5, 1.0, 0.0))
+
+    @classmethod
+    def parse_prediction(cls,predicts):
+        predicts = predicts.squeeze(0)
+        upper_color = predicts[0:11]
+        lower_color = predicts[11:22]
+        gender = predicts[22:24]
+        hat = predicts[24:26]
+        bag = predicts[26:28]
+        return cls.color_dict[int(torch.argmax(upper_color))],cls.color_dict[int(torch.argmax(lower_color))],cls.gender_dict[int(torch.argmax(gender))],cls.hat_dict[int(torch.argmax(hat))],cls.bag_dict[int(torch.argmax(bag))]

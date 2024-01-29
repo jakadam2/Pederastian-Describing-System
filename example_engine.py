@@ -8,16 +8,17 @@ from pathlib import Path
 from TOOLS.person import Person
 from TOOLS.roi import RoiReaderEmulator
 from TOOLS.result_writer import ResultWriter
+from TOOLS.roi import RoiReader
 
 import cv2 as cv
 from ultralytics import YOLO
 from boxmot import DeepOCSORT
 import torch
 
-from PAR.resnet_extractor import Resnet50Extractor
-from PAR.binary_classifier import GenderClassiefierResNet
-from torchvision.models import ResNet50_Weights as rw
-from torchvision.transforms.functional import adjust_contrast
+from PAR.multitask_classifier import MTPAR
+from torchvision.models import ResNet18_Weights as rw
+from PAR.multitask_classifier import PredicitonParser
+
 
 
 if len(sys.argv) < 3:
@@ -38,6 +39,8 @@ model = YOLO(model_file)
 roi_reader = RoiReaderEmulator()
 roi1,roi2 = roi_reader.load()
 
+roi11,roi12 = RoiReader(1080,1920).load('roi.txt')
+
 detected = {}
 result_writer = ResultWriter('ex.json')
 
@@ -47,18 +50,15 @@ tracker = DeepOCSORT(
     fp16=True,
 )
 
-feature_extractor = Resnet50Extractor()
-par_model = GenderClassiefierResNet(feature_extractor).to('cuda')
-par_model.load_state_dict(torch.load('./weights/resnetgender.pt'))
+par_model = MTPAR()
+par_model.load_state_dict(torch.load('./weights/multitask_model.pt'))
 par_model.eval()
-
-transform = rw.IMAGENET1K_V2.transforms()
+transform = rw.IMAGENET1K_V1.transforms()
+parser = PredicitonParser()
 
 while True:
 
     success,img = cap.read()
-    mmimg = img.copy()
-    img = cv.convertScaleAbs(img,alpha = 0.2, beta = 150)
     if success == False:
         print('END')
         break
@@ -78,35 +78,30 @@ while True:
 
     tracks= tracker.update(detections,orig_img)
     present_people = set()
+
     for track in tracks:
-        # showing bbox
         bbox = track[0:4].astype(int)
         id = track[4].astype(int)
-        # features
-        if roi1.include(bbox) or roi2.include(bbox):
-            if id not in detected.keys(): # that means that we see this pearson first time 
-                x1, y1, x2, y2 = bbox
-                extract = orig_img[y1 + 1:y2 -1,x1 + 1:x2 - 1]
-                # here should be referencing extract img to a model regonizning other features
-                # and writing this features to object by maybe a nice property 
-                # for now only feature is id another features will be added with models detectin it
-                # it's only my concept so it could be done better
-                # extract is a signle person 
-                detected[id] = Person(int(id)) # this object should store info about person
-                extract = orig_img[y1 + 1:y2 -1,x1 + 1:x2 - 1]
-                #extract = cv.convertScaleAbs(extract,alpha = 1.2, beta = - 50)
-                extract = torch.from_numpy(extract.astype(np.float32))
-                extract = extract.permute(2,0,1)
-                extract = transform(extract).to('cuda').unsqueeze(0)
-                gender_ratio = par_model(extract)
-                if gender_ratio > 0.5:
-                    detected[id].gender = 'female'
-                else:
-                    detected[id].gender = 'male'
-        # rois needs additional thinking because now it vunerable on blinking bboxies
-            detected[id].is_in_roi1(roi1.include(bbox))
-            detected[id].is_in_roi2(roi2.include(bbox))
-            present_people.add(id)  
+
+        if id not in detected.keys(): # that means that we see this pearson first time 
+            x1, y1, x2, y2 = bbox
+            extract = orig_img[y1 + 1:y2 -1,x1 + 1:x2 - 1]
+            detected[id] = Person(int(id)) # this object should store info about person
+            extract = orig_img[y1 + 1:y2 -1,x1 + 1:x2 - 1]
+            extract = torch.from_numpy(extract.astype(np.float32))
+            extract = extract.permute(2,0,1)
+            extract = transform(extract).to('cuda').unsqueeze(0)
+            upper_color,lower_color,gender,hat_presence ,bag_presence  = par_model(extract)
+            parser.parse_to_person(detected[id],[upper_color,lower_color,gender,hat_presence ,bag_presence ])
+
+        detected[id].is_in_roi1(roi11.include(bbox))
+        detected[id].is_in_roi2(roi12.include(bbox))
+        present_people.add(id)  
+        
+        if roi11.include(bbox) or roi12.include(bbox): 
+            color  = (255, 0, 0)
+        else:
+            color = (0, 0, 255) 
 
         img = cv.rectangle(
                 img,
@@ -118,29 +113,58 @@ while True:
         cv.putText(
                 img,
                 f'id: {id} {detected[id].gender}',
+                (bbox[0], bbox[1]-36),
+                cv.FONT_HERSHEY_SIMPLEX,
+                fontscale,
+                color,
+                1
+            )
+        cv.putText(
+                img,
+                f'hat:{detected[id].hat} bag:{detected[id].bag}',
+                (bbox[0], bbox[1]-23),
+                cv.FONT_HERSHEY_SIMPLEX,
+                fontscale,
+                color,
+                1
+            )     
+        cv.putText(
+                img,
+                f'U:{detected[id].upper_color} L:{detected[id].lower_color}',
                 (bbox[0], bbox[1]-10),
                 cv.FONT_HERSHEY_SIMPLEX,
                 fontscale,
                 color,
-                thickness
-            )
-        
+                1
+            )      
 
     for id in detected:
         if id not in present_people:
             detected[id].is_in_roi1(False)
             detected[id].is_in_roi2(False)
 
+
+    img = cv.rectangle(
+            img,
+            roi11.bbox[0],
+            roi11.bbox[1],
+            (0,  255,0),
+            3
+        )
+    
+    img = cv.rectangle(
+        img,
+        roi12.bbox[0],
+        roi12.bbox[1],
+        (0,  255,0),
+        3
+    )
+
     cv.imshow('People Detection Video',img)
-    cv.imshow('People Detection Vidgggeo',mmimg)
     cv.waitKey(1)
 
 for id in detected:
-    detected[id].is_in_roi1(False)
-    detected[id].is_in_roi2(False)   
+    detected[id].end_rois()
+   
     
 result_writer.write_ans(detected.values())
-
-# TODO: think about when and how decide about pederastian features !!!!!!!!!!!!!!!!!!!
-# TODO: think about contrast 
-# TODO: think about blinking bboxes

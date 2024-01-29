@@ -77,7 +77,7 @@ def validate():
     model.eval()
 
     transform = models.ConvNeXt_Small_Weights.IMAGENET1K_V1.transforms(antialias=True)
-    validate_data = ImageDataset('./data/par_datasets/validation_set.txt','./data/par_datasets/validation_set',transform=transform)
+    validate_data = ImageDataset('./data/par_datasets/training_set_atrio_cues.txt','./data/par_datasets/training_set_atrio_cues/',transform=transform)
     validate_loader = torch.utils.data.DataLoader(validate_data,batch_size=64)
     acc_upper_color, acc_lower_color, acc_bag, acc_hat, acc_gender = calculate_accuracy(model, validate_loader)
     print("accuracy upper color:", acc_upper_color)
