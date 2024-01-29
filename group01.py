@@ -14,9 +14,9 @@ from ultralytics import YOLO
 from boxmot import DeepOCSORT
 import torch
 
-from PAR.multi_task import MTPAR
+from PAR.multitask_classifier import MTPAR
 from torchvision.models import ResNet18_Weights as rw
-from PAR.multi_task import PredicitonParser
+from PAR.multitask_classifier import PredicitonParser
 
 from TOOLS.argparser import Parser
 
@@ -47,7 +47,7 @@ tracker = DeepOCSORT(
 )
 
 par_model = MTPAR()
-par_model.load_state_dict(torch.load('./weights/multi_model.pt'))
+par_model.load_state_dict(torch.load('./weights/multitask_model.pt'))
 par_model.eval()
 transform = rw.IMAGENET1K_V1.transforms()
 parser = PredicitonParser()
