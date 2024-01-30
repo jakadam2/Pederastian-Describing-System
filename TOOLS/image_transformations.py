@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 
+
 class ImageTransformations:
 
     def __init__(self, image_path_or_object, RGB=True, read_image_from_file=True):

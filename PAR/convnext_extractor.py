@@ -3,6 +3,7 @@ import torch.nn as nn
 import torchvision.models as models
 from torchvision.models.feature_extraction import create_feature_extractor
 
+
 class ConvexNextExtractor(nn.Module):
     # INPUT SHAPE = (batch_size, 3, 224, 224)
     # OUTPUT SHAPE = (batch_size, 768, 7, 7)

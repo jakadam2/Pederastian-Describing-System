@@ -2,6 +2,7 @@ import torch.nn as nn
 from PAR.cbam import CBAM
 import torch
 
+
 class BinaryClassiefier(nn.Module):
     
     def __init__(self) -> None:

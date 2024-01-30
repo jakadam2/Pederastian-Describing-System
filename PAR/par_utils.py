@@ -9,6 +9,7 @@ import pandas as pd
 from PIL import Image
 import numpy as np
 
+
 class PAR(nn.Module):
 
     def __init__(self,extractor,upper_color,lower_color,gender,hat,bag) -> None:

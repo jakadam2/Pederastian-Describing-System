@@ -1,6 +1,7 @@
 from abc import ABC,abstractmethod
 from typing import Any
 import torch
+from queue import PriorityQueue
 
 class PredictChooser(ABC):
 
@@ -56,3 +57,37 @@ class AvgPredictChooser(PredictChooser):
         self._curren_pred += 1
         self._current_state /= self._curren_pred
         return self._fdict[int(torch.argmax(self._current_state))]
+    
+
+class KMaxPredictChooser(PredictChooser):
+
+    def __init__(self, feature_dim, feature_dict,k = 5) -> None:
+        super().__init__(feature_dim, feature_dict)
+        self._q = PriorityQueue(k)
+        self._softmax = torch.nn.Softmax(0)
+
+    def _parse(self, predict) -> Any:
+        predict = self._softmax(predict).to('cpu')
+        if not self._q.full():
+            self._q.put((float(torch.max(predict)),predict))
+        else:
+            value,element = self._q.get()
+            if value > float(torch.max(predict)):
+                self._q.put((value,element))
+            else:
+                self._q.put((float(torch.max(predict)),predict))
+        i = 0
+        current_state = torch.zeros(self._feature_dim)
+        print(self._q.qsize())
+        to_add = set()
+        while not self._q.empty():
+            value,element = self._q.get()
+            print(value)
+            current_state *= i
+            current_state += element
+            i += 1
+            current_state /= i
+            to_add.add((value,element))
+        for pair in to_add:
+            self._q.put(pair)
+        return self._fdict[int(torch.argmax(current_state))]

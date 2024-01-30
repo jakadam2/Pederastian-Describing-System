@@ -5,7 +5,7 @@ from PIL import Image
 # I also needed to install: pip install --upgrade typing-extensions
 
 
-class bgRemover(): 
+class BgRemover(): 
     
     def __init__(self): 
         # Loads the model 
@@ -18,7 +18,6 @@ class bgRemover():
         # self.normalization_transform = T.Compose([T.ToPILImage(), T.ToTensor(), T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])])
         self.normalization_transform = T.Compose([T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])])
 
-    
     def _img2tensor(self, img_path, normalization=True):
         img = Image.open(img_path).convert("RGB")
         if normalization == True: 
@@ -35,7 +34,6 @@ class bgRemover():
         if output_img_path is not None: 
             img.save(output_img_path)
         return img
-    
     
     def _getMask(self, tensor):
         with torch.no_grad():
@@ -70,7 +68,6 @@ class bgRemover():
         return out
 
     
-
 # ----------- USAGE ---------------
 
 # def main(): 

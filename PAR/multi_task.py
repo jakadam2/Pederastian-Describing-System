@@ -4,6 +4,7 @@ import torch
 import torchvision.models as models
 from torchvision.models.feature_extraction import create_feature_extractor
 
+
 class MTPartClassifier(nn.Module):
 
     def __init__(self,nclasses) -> None:

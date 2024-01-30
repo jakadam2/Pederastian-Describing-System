@@ -3,7 +3,6 @@ from typing import Any
 from TOOLS.annoucer import TextAnnoucer
 from TOOLS.predict_chooser import *
 
-chooser = AvgPredictChooser
 
 class Person:
     '''
@@ -13,31 +12,29 @@ class Person:
         *every loop in detector object was given a presence of each roi
     IMPORTANT: to know idea about the names look at the comment in ResultWritter file
     '''
-
-    color_dict = {0:'black', 1: 'blue',2:'brown',3: 'gray', 4:'green', 5:'orange', 6:'pink', 7:'purple', 8:'red', 9:'white',10: 'yellow'}
-    gender_dict = {0:'male',1:'female'}
-    bag_dict = {0:False,1:True}
-    hat_dict = {0:False,1:True}
+    _color_dict = {0:'black', 1: 'blue',2:'brown',3: 'gray', 4:'green', 5:'orange', 6:'pink', 7:'purple', 8:'red', 9:'white',10: 'yellow'}
+    _gender_dict = {0:'male',1:'female'}
+    _bag_dict = {0:False,1:True}
+    _hat_dict = {0:False,1:True}
+    _annoucer = TextAnnoucer()
+    _tollerance_time = 5
+    _chooser = KMaxPredictChooser
 
     def __init__(self,id) -> None:
-        # here should be all of features
         self.id = id
         self.roi1_time = 0.0
         self.roi2_time = 0.0
         self.roi1_passes = 0
         self.roi2_passes = 0
-        self.upper_color = 'unknown'
         self._inroi1 = False
         self._inroi2 = False
-        self._annoucer = TextAnnoucer()
-        self._tollerance_time = 5
         self._pass_time1 = 0
         self._pass_time1 = 0
-        self._bag_chooser = chooser(2,Person.bag_dict)
-        self._hat_chooser = chooser(2,Person.hat_dict)
-        self._gender_chooser = chooser(2,Person.gender_dict)
-        self._upper_chooser = chooser(11,Person.color_dict)
-        self._lower_chooser = chooser(11,Person.color_dict)
+        self._bag_chooser = self._chooser(2,self._bag_dict)
+        self._hat_chooser = self._chooser(2,self._hat_dict)
+        self._gender_chooser = self._chooser(2,self._gender_dict)
+        self._upper_chooser = self._chooser(11,self._color_dict)
+        self._lower_chooser = self._chooser(11,self._color_dict)
         
     def __call__(self, predicts) -> None:
         predicts = predicts.squeeze(0)
@@ -58,7 +55,7 @@ class Person:
             raise LookupError(f'{self} is already in roi1')
         self._roi1_ptime = perf_counter()
         self._inroi1 = True
-        self._annoucer.annouce(self.id,'roi1')
+        self._annoucer(self.id,'roi1')
 
     def _stopRoi1(self) -> None:
         if not self._inroi1:
@@ -73,7 +70,7 @@ class Person:
             raise LookupError(f'{self} is already in roi2')
         self._roi2_ptime = perf_counter()
         self._inroi2 = True
-        self._annoucer.annouce(self.id,'roi2')
+        self._annoucer(self.id,'roi2')
 
     def _stopRoi2(self) -> None:
         if not self._inroi2:
