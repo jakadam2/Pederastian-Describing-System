@@ -71,27 +71,4 @@ class MTLoss(nn.Module):
             cum_loss += self._loss(predicts[:,j:j + MTLoss.steps[i] + 1][mask],labels[:,i][mask])
             j += MTLoss.steps[i]
         return cum_loss
-    
-
-class PredicitonParser:
-    
-    color_dict = {0:'black', 1: 'blue',2:'brown',3: 'gray', 4:'green', 5:'orange', 6:'pink', 7:'purple', 8:'red', 9:'white',10: 'yellow'}
-    gender_dict = {0:'male',1:'female'}
-    bag_dict = {0:False,1:True}
-    hat_dict = {0:False,1:True}
-
-    def parse_to_person(self,person,predicts):
-        person.upper_color,person.lower_color,person.gender,person.hat,person.bag = self.parse_prediction(predicts)
-
-    @classmethod
-    def parse_prediction(cls,predicts):
-        predicts = predicts.squeeze(0)
-        upper_color = predicts[0:11]
-        lower_color = predicts[11:22]
-        gender = predicts[22:24]
-        hat = predicts[24:26]
-        bag = predicts[26:28]
-        return cls.color_dict[int(torch.argmax(upper_color))],cls.color_dict[int(torch.argmax(lower_color))],cls.gender_dict[int(torch.argmax(gender))],cls.hat_dict[int(torch.argmax(hat))],cls.bag_dict[int(torch.argmax(bag))]
-
-
-    
+        

@@ -1,7 +1,6 @@
 import numpy as np
 import math
 
-import sys
 from os.path import join
 from pathlib import Path
 
@@ -16,7 +15,6 @@ import torch
 
 from PAR.multi_task import MTPAR
 from torchvision.models import ResNet18_Weights as rw
-from PAR.multi_task import PredicitonParser
 
 from TOOLS.argparser import Parser
 
@@ -30,7 +28,6 @@ fontscale = 0.5
 video_name = arguments.video
 viedo_file = join('./data','videos',video_name)
 cap = cv.VideoCapture(viedo_file)
-
 
 model_file = join('./weights','yolov8l.pt')
 model = YOLO(model_file)
@@ -50,9 +47,14 @@ par_model = MTPAR()
 par_model.load_state_dict(torch.load('./weights/multi_model.pt'))
 par_model.eval()
 transform = rw.IMAGENET1K_V1.transforms()
-parser = PredicitonParser()
+
+SPARSE = 50
+iterator = 0
 
 while True:
+    if iterator == SPARSE:
+        iterator = 0
+    iterator += 1
 
     success,img = cap.read()
     if success == False:
@@ -78,16 +80,17 @@ while True:
         bbox = track[0:4].astype(int)
         id = track[4].astype(int)
 
-        if id not in detected.keys(): # that means that we see this pearson first time 
+        if id not in detected.keys() or iterator == SPARSE: # that means that we see this pearson first time 
             x1, y1, x2, y2 = bbox
             extract = orig_img[y1 + 1:y2 -1,x1 + 1:x2 - 1]
-            detected[id] = Person(int(id)) # this object should store info about person
+            if id not in detected.keys():
+                detected[id] = Person(int(id)) # this object should store info about person
             extract = orig_img[y1 + 1:y2 -1,x1 + 1:x2 - 1]
             extract = torch.from_numpy(extract.astype(np.float32))
             extract = extract.permute(2,0,1)
             extract = transform(extract).to('cuda').unsqueeze(0)
             predicts = par_model(extract)
-            parser.parse_to_person(detected[id],predicts)
+            detected[id](predicts)
 
         detected[id].is_in_roi1(roi1.include(bbox))
         detected[id].is_in_roi2(roi2.include(bbox))
@@ -162,7 +165,3 @@ for id in detected:
     detected[id].end_rois()
       
 result_writer.write_ans(detected.values())
-
-# TODO: think about when and how decide about pederastian features !!!!!!!!!!!!!!!!!!!
-# TODO: think about contrast 
-# TODO: think about blinking bboxes
