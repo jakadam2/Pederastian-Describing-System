@@ -109,13 +109,3 @@ class PredicitonParser:
         person.gender = int(torch.where(predicts[2] > .5, 1.0, 0.0))
         person.hat = int(torch.where(predicts[3] > .5, 1.0, 0.0))
         person.bag = int(torch.where(predicts[4] > .5, 1.0, 0.0))
-
-    @classmethod
-    def parse_prediction(cls,predicts):
-        predicts = predicts.squeeze(0)
-        upper_color = predicts[0:11]
-        lower_color = predicts[11:22]
-        gender = predicts[22:24]
-        hat = predicts[24:26]
-        bag = predicts[26:28]
-        return cls.color_dict[int(torch.argmax(upper_color))],cls.color_dict[int(torch.argmax(lower_color))],cls.gender_dict[int(torch.argmax(gender))],cls.hat_dict[int(torch.argmax(hat))],cls.bag_dict[int(torch.argmax(bag))]

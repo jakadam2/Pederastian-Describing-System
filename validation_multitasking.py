@@ -3,7 +3,6 @@ import torch.nn as nn
 from torch.utils.data import DataLoader
 # from PAR.convnext_extractor import ConvexNextExtractor
 from PAR.multitask_classifier import MTPAR
-from PAR.color_classifier import ColorClassifier
 from PAR.par_utils_multitask import ImageDataset
 import torchvision.models as models
 import torch.nn.functional as F
