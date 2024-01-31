@@ -72,11 +72,11 @@ def calculate_accuracy(model, data_loader):
 
 def validate():
     model = MTPAR().to('cuda')
-    model.load_state_dict(torch.load('./weights/multitask_model.pt'))
+    model.load_state_dict(torch.load('./weights/multitask_general_model_clahe_test2.pt'))
     model.eval()
 
     transform = models.ConvNeXt_Small_Weights.IMAGENET1K_V1.transforms(antialias=True)
-    validate_data = ImageDataset('./data/par_datasets/training_set_atrio_cues.txt','./data/par_datasets/training_set_atrio_cues/',transform=transform)
+    validate_data = ImageDataset('./data/par_datasets/validation_set.txt','./data/par_datasets/validation_set/',transform=transform)
     validate_loader = torch.utils.data.DataLoader(validate_data,batch_size=64)
     acc_upper_color, acc_lower_color, acc_bag, acc_hat, acc_gender = calculate_accuracy(model, validate_loader)
     print("accuracy upper color:", acc_upper_color)

@@ -67,7 +67,7 @@ class MTPAR(nn.Module):
         gender = self.sigmoid(self.dl5_binary(self.gender(x)))
         upper_color = self.dl5_categorical(self.upper_color(x))
         lower_color = self.dl5_categorical(self.lower_color(x))
-        return upper_color,lower_color,gender,hat_presence ,bag_presence 
+        return upper_color,lower_color,gender,bag_presence ,hat_presence 
 
 
 
@@ -107,5 +107,6 @@ class PredicitonParser:
         person.upper_color = int(torch.argmax(F.softmax(predicts[0], dim=1)))
         person.lower_color = int(torch.argmax(F.softmax(predicts[1], dim=1)))
         person.gender = int(torch.where(predicts[2] > .5, 1.0, 0.0))
-        person.hat = int(torch.where(predicts[3] > .5, 1.0, 0.0))
-        person.bag = int(torch.where(predicts[4] > .5, 1.0, 0.0))
+        person.bag = int(torch.where(predicts[3] > .5, 1.0, 0.0))
+        person.hat = int(torch.where(predicts[4] > .5, 1.0, 0.0))
+        
