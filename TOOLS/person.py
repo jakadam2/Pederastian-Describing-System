@@ -18,7 +18,7 @@ class Person:
     _hat_dict = {0:False,1:True}
     _annoucer = TextAnnoucer()
     _tollerance_time = 5
-    _chooser = KMaxPredictChooser
+    _chooser = SamePredictChooser
 
     def __init__(self,id) -> None:
         self.id = id
@@ -29,7 +29,7 @@ class Person:
         self._inroi1 = False
         self._inroi2 = False
         self._pass_time1 = 0
-        self._pass_time1 = 0
+        self._pass_time2 = 0
         self._bag_chooser = self._chooser(2,self._bag_dict)
         self._hat_chooser = self._chooser(2,self._hat_dict)
         self._gender_chooser = self._chooser(2,self._gender_dict)
@@ -37,7 +37,7 @@ class Person:
         self._lower_chooser = self._chooser(11,self._color_dict)
         
     def __call__(self, predicts) -> None:
-        predicts = predicts.squeeze(0)
+        predicts = predicts.squeeze(0) 
         self.upper_color = self._upper_chooser(predicts[0:11])
         self.lower_color = self._lower_chooser(predicts[11:22])
         self.gender = self._gender_chooser(predicts[22:24])
@@ -96,10 +96,15 @@ class Person:
     def is_in_roi2(self,presence) -> None:
         if presence == self._inroi2:
             return
-        elif presence == True:
+        
+        elif presence:
+            self._pass_time2 = 0
             self._startRoi2()
+
         else:
-            self._stopRoi2()
+            self._pass_time2 += 1
+            if self._pass_time2 == self._tollerance_time:
+                self._stopRoi2()
 
     def end_rois(self):
         if self._inroi1:

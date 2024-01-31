@@ -78,7 +78,6 @@ class KMaxPredictChooser(PredictChooser):
                 self._q.put((float(torch.max(predict)),predict))
         i = 0
         current_state = torch.zeros(self._feature_dim)
-        print(self._q.qsize())
         to_add = set()
         while not self._q.empty():
             value,element = self._q.get()
