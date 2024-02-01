@@ -1,8 +1,13 @@
 import torch.nn as nn
 import torch
 import torchvision.models as models
-from PAR.multi_task import MTLoss,MTPAR
+from PAR.multi_task import AMTLoss,AMTPAR
 from PAR.par_utils import MTImageDataset
+from TOOLS.bg_remover import BgRemover
+
+
+def save_epochs(epoch_nr,loss,model):
+    torch.save(model.state_dict(),f'./weights/train0/multitask_{epoch_nr}_loss:{round(loss,4)}.pt')
 
 
 def train_one_epoch(train_loader,optimizer,model,loss_fn):
@@ -29,12 +34,14 @@ def train_one_epoch(train_loader,optimizer,model,loss_fn):
 
 def train(epochs,LR = 10 ** -3) -> None:
     f = open('./raports/train_multi_raport.txt','w+')
-    criterion = MTLoss()
-    model = MTPAR()
+    criterion = AMTLoss()
+    model = AMTPAR()
     optimizer = torch.optim.AdamW(model.parameters(),lr = LR)
     transform = models.ResNet18_Weights.IMAGENET1K_V1.transforms()
-    train_data = MTImageDataset('./data/par_datasets/training_set.txt','./data/par_datasets/training_set' ,transform=transform)
+    train_data = MTImageDataset('./data/par_datasets/training_set.txt','./data/par_datasets/training_set' ,transform=transform,clahe=True)
+    train_custom_data = MTImageDataset('./data/par_datasets/custom_set.txt','./data/par_datasets/custom_set' ,transform=transform,clahe=True)
     train_loader = torch.utils.data.DataLoader(train_data,batch_size=64)
+    custom_loader = torch.utils.data.DataLoader(train_custom_data,batch_size = 16)
     model.train(True)
     print('START TRAINING')
     f.write('START TRAINING\n')
@@ -42,12 +49,25 @@ def train(epochs,LR = 10 ** -3) -> None:
         print(f'EPOCH {epoch + 1}')
         f.write(f'EPOCH {epoch + 1}\n')
         epoch_loss = train_one_epoch(train_loader,optimizer,model,criterion)
+        save_epochs(epoch,epoch_loss,model)
         print(f'LOSS: {epoch_loss}')
         f.write(f'LOSS: {epoch_loss}\n')
+
+    for group in optimizer.param_groups:
+        group['lr'] /= 100
+
+    for epoch in range(epochs,2*epochs + 1):
+        print(f'EPOCH {epoch + 1}')
+        f.write(f'EPOCH {epoch + 1}\n')
+        epoch_loss = train_one_epoch(custom_loader,optimizer,model,criterion)
+        save_epochs(epoch,epoch_loss,model)
+        print(f'LOSS: {epoch_loss}')
+        f.write(f'LOSS: {epoch_loss}\n')
+
     print('TRAINING FINISHED')
-    f.write('TRAINING FINISHED')
+    f.write('TRAINING FINISHED') 
     f.close()
-    torch.save(model.state_dict(),'./weights/multi_model.pt')
+    torch.save(model.state_dict(),'./train0/weights/multitask.pt')
 
 if __name__ == '__main__':
-    train(13)
+    train(15)
