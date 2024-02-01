@@ -1,7 +1,6 @@
 import numpy as np
 import math
 
-import sys
 from os.path import join
 from pathlib import Path
 
@@ -14,14 +13,16 @@ from ultralytics import YOLO
 from boxmot import DeepOCSORT
 import torch
 
-from PAR.multitask_classifier import MTPAR
+from PAR.multitask_classifier import DMTPAR,DMTPARpart
 from torchvision.models import ResNet18_Weights as rw
 from PAR.multitask_classifier import PredicitonParser
 
-from TOOLS.argparser import Parser
-from TOOLS.bgRemover import bgRemover
+from PAR.multi_task import AMTPAR,AMTPARpart
 
-bgr = bgRemover()
+from TOOLS.argparser import Parser
+from TOOLS.bg_remover import BgRemover
+
+bgr = BgRemover()
 
 parser = Parser()
 arguments = parser.parse()
@@ -49,9 +50,14 @@ tracker = DeepOCSORT(
     fp16=True,
 )
 
-par_model = MTPAR()
-par_model.load_state_dict(torch.load('./weights/multitask_specific_model_clahe_test2.pt'))
+par_modeld = DMTPAR()
+par_modeld.load_state_dict(torch.load('./weights/color_multi.pt'))
+par_modeld.eval()
+color_model = DMTPARpart(par_modeld)
+par_model = AMTPAR()
+par_model.load_state_dict(torch.load('./weights/multi_model.pt'))
 par_model.eval()
+attr_model = AMTPARpart(par_model)
 transform = rw.IMAGENET1K_V1.transforms()
 parser = PredicitonParser()
 
@@ -94,12 +100,12 @@ while True:
             extract = orig_img[y1 + 1:y2 -1,x1 + 1:x2 - 1]
             extract = torch.from_numpy(extract.astype(np.float32))
             extract = extract.permute(2,0,1)
-            # extract = bgr.clahe(extract)
-            
-            extract = extract.permute(2,0,1)
+            color_extract = bgr.clahe(extract) 
             extract = transform(extract).to('cuda').unsqueeze(0)
-            upper_color,lower_color,gender,bag_presence ,hat_presence = par_model(extract)
-            detected[id]([upper_color,lower_color,gender,bag_presence ,hat_presence ])
+            color_extract = transform(color_extract).to('cuda').unsqueeze(0)
+            upper_color,lower_color = color_model(color_extract)
+            bag,gender,hat = attr_model(extract)
+            detected[id]([upper_color,lower_color,gender,bag,hat])
 
         detected[id].is_in_roi1(roi1.include(bbox))
         detected[id].is_in_roi2(roi2.include(bbox))

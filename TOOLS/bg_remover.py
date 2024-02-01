@@ -4,11 +4,11 @@ from torchvision import models
 from PIL import Image
 import cv2
 import numpy as np
-from TOOLS.imageTransformations import ImageTransformations
+from TOOLS.image_transformations import ImageTransformations
 # I also needed to install: pip install --upgrade typing-extensions
 
 
-class bgRemover(): 
+class BgRemover(): 
 
     _GREEN = [0, 1, 0]
     _BLACK = [0, 0, 0]
@@ -16,9 +16,9 @@ class bgRemover():
     
     def __init__(self): 
         # Loads the model 
-        model = models.segmentation.deeplabv3_resnet101(pretrained=True)
-        model.eval()
-        self.model = model
+        #model = models.segmentation.deeplabv3_resnet101(pretrained=True)
+        #model.eval()
+        #self.model = model
         # simple transform that makes an image to tensor 
         self.simple_transform = T.Compose([T.ToTensor()])
         # transform that normalizes the tensor so it's ready for the model 

@@ -4,10 +4,10 @@ import torch
 import torchvision.models as models
 from torchvision.models.feature_extraction import create_feature_extractor
 
-class MTPartClassifier(nn.Module):
+class AMTPartClassifier(nn.Module):
 
     def __init__(self,nclasses) -> None:
-        super(MTPartClassifier,self).__init__()
+        super(AMTPartClassifier,self).__init__()
         self.attention_module = CBAM(512)
         self.dl1 = nn.Linear(2048,128)
         self.bn1 = nn.BatchNorm1d(128)
@@ -29,19 +29,19 @@ class MTPartClassifier(nn.Module):
         return features
     
 
-class MTPAR(nn.Module):
+class AMTPAR(nn.Module):
 
     def __init__(self,device = 'cuda') -> None:
-        super(MTPAR,self).__init__()
+        super(AMTPAR,self).__init__()
         return_node = {'layer4.1':'relu_1'}
         model = models.resnet18(models.ResNet18_Weights.IMAGENET1K_V1).to(device)
         self.extractor = create_feature_extractor(model, return_node)
         self.extractor = create_feature_extractor(model, return_node)
-        self.upper_color = MTPartClassifier(11).to(device)
-        self.lower_color = MTPartClassifier(11).to(device)
-        self.bag = MTPartClassifier(2).to(device)
-        self.hat = MTPartClassifier(2).to(device)
-        self.gender = MTPartClassifier(2).to(device)
+        self.upper_color = AMTPartClassifier(11).to(device)
+        self.lower_color = AMTPartClassifier(11).to(device)
+        self.bag = AMTPartClassifier(2).to(device)
+        self.hat = AMTPartClassifier(2).to(device)
+        self.gender = AMTPartClassifier(2).to(device)
 
     def forward(self,x):
         features = self.extractor(x)['relu_1']
@@ -51,7 +51,19 @@ class MTPAR(nn.Module):
         upper_color = self.upper_color(features)
         lower_color = self.lower_color(features)
         return torch.hstack((upper_color,lower_color,gender,hat,bag))
-    
+
+
+class AMTPARpart(nn.Module):
+
+    def __init__(self,model) -> None:
+        super(AMTPARpart,self).__init__()
+        self._model = create_feature_extractor(model,{'hat.dl2':'hat','gender.dl2':'gender','bag.dl2':'bag'})
+
+    def forward(self,x):
+        ans = self._model(x)
+        return ans['bag'],ans['gender'],ans['hat']
+
+
 
 class MTLoss(nn.Module):
 

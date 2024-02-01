@@ -1,7 +1,7 @@
 import torch.nn as nn
 import torch
 import torchvision.models as models
-from PAR.multitask_classifier import MTPAR, MTLoss
+from PAR.multitask_classifier import DMTPAR, DMTLoss
 from PAR.par_utils_multitask import ImageDataset
 
 # import torch.nn.functional as F
@@ -38,14 +38,14 @@ def train(epochs,LR = 10 ** -3, early_stopping = 3) -> None:
     f = open('./raports/train_multitask_test1_without_clahe.txt','w+')
 
     # Criterions
-    criterion = MTLoss()
+    criterion = DMTLoss()
 
 
     # Model
-    model = MTPAR()
+    model = DMTPAR()
 
     optimizer = torch.optim.AdamW(params=filter(lambda p: p.requires_grad, model.parameters()),lr = LR)
-    transform = models.ConvNeXt_Small_Weights.IMAGENET1K_V1.transforms(antialias=True)
+    transform = models.ConvNeXt_Small_Weights.IMAGENET1K_V1.transforms()
     
     train_data = ImageDataset('./data/par_datasets/training_set.txt','./data/par_datasets/training_set' ,transform=transform)
     train_loader = torch.utils.data.DataLoader(train_data,batch_size=64)
@@ -81,8 +81,8 @@ def train(epochs,LR = 10 ** -3, early_stopping = 3) -> None:
     # model.load_state_dict(torch.load('./weights/multitask_model.pt'))
     new_train_data = ImageDataset('./data/par_datasets/training_set_atrio_cues.txt','./data/par_datasets/training_set_atrio_cues' ,transform=transform)
     new_train_loader = torch.utils.data.DataLoader(new_train_data,batch_size=8)
-    model.load_state_dict(torch.load('./weights/multitask_general_model_without_clahe_test1.pt'))
-    new_optimizer = torch.optim.AdamW(params=filter(lambda p: p.requires_grad, model.parameters()),lr = LR*0.1)
+    #model.load_state_dict(torch.load('./weights/multitask_general_model_without_clahe_test1.pt'))
+    #new_optimizer = torch.optim.AdamW(params=filter(lambda p: p.requires_grad, model.parameters()),lr = LR*0.1)
     prev_loss = 0
     count = 0
     print('START TRAINING ATRIO CUES')
@@ -90,7 +90,7 @@ def train(epochs,LR = 10 ** -3, early_stopping = 3) -> None:
     for epoch in range(epochs):
         print(f'EPOCH {epoch + 1}')
         f.write(f'EPOCH {epoch + 1}\n')
-        epoch_loss = train_one_epoch(new_train_loader,new_optimizer,model,criterion)
+        epoch_loss = train_one_epoch(new_train_loader,optimizer,model,criterion)
         print(f'LOSS: {epoch_loss}')
         f.write(f'LOSS: {epoch_loss}\n')
         if abs(epoch_loss-prev_loss) < 0.01:

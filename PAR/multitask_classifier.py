@@ -3,6 +3,7 @@ import torch.nn.functional as F
 from PAR.cbam import CBAM
 import torch
 from PAR.resnet_extractor import ResNetExtractor
+from torchvision.models.feature_extraction import create_feature_extractor
 
 class Classifier(nn.Module):
     def __init__(self, num_classes=11):
@@ -46,10 +47,10 @@ class Classifier(nn.Module):
         return x
 
 
-class MTPAR(nn.Module):
+class DMTPAR(nn.Module):
 
     def __init__(self,device = 'cuda') -> None:
-        super(MTPAR,self).__init__()
+        super(DMTPAR,self).__init__()
         self.extractor = ResNetExtractor().to(device)
         self.upper_color = Classifier(11).to(device)
         self.lower_color = Classifier(11).to(device)
@@ -69,14 +70,21 @@ class MTPAR(nn.Module):
         lower_color = self.dl5_categorical(self.lower_color(x))
         return upper_color,lower_color,gender,bag_presence ,hat_presence 
 
+class DMTPARpart(nn.Module):
+
+    def __init__(self,model) -> None:
+        super(DMTPARpart,self).__init__()
+        self._model = create_feature_extractor(model,{'dl5_categorical':'upper_color','dl5_categorical_1':'lower_color'})
+
+    def forward(self,x):
+        ans = self._model(x)
+        return ans['upper_color'],ans['lower_color']
 
 
-class MTLoss(nn.Module):
-
-    
+class DMTLoss(nn.Module):
 
     def __init__(self) -> None:
-        super(MTLoss,self).__init__()
+        super(DMTLoss,self).__init__()
         self._categorical_loss = nn.CrossEntropyLoss()
         self._binary_loss = nn.BCELoss()
         self._num_classes = 11

@@ -8,7 +8,7 @@ from torchvision.io import read_image
 import pandas as pd
 from PIL import Image
 import numpy as np
-from TOOLS.bgRemover import bgRemover
+from TOOLS.bg_remover import BgRemover
 
 class PAR(nn.Module):
 
@@ -41,7 +41,7 @@ class ImageDataset(Dataset):
         self.transform = transform
         self.target_transform = target_transform
         self.pll = transforms.Compose([transforms.PILToTensor()])
-        self.bgr = bgRemover()
+        self.bgr = BgRemover()
 
     def __len__(self):
         return len(self.img_labels)
@@ -51,7 +51,7 @@ class ImageDataset(Dataset):
         image = Image.open(img_path)
         image = self.pll(image).to(torch.float32)
         
-        # image = self.bgr.clahe(image)
+        image = self.bgr.clahe(image)
         
         label = self.img_labels.iloc[idx,1:6]
         label = torch.tensor(label,dtype= torch.float32)

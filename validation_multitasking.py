@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 # from PAR.convnext_extractor import ConvexNextExtractor
-from PAR.multitask_classifier import MTPAR
+from PAR.multitask_classifier import DMTPAR
 from PAR.par_utils_multitask import ImageDataset
 import torchvision.models as models
 import torch.nn.functional as F
@@ -71,7 +71,7 @@ def calculate_accuracy(model, data_loader):
 
 
 def validate():
-    model = MTPAR().to('cuda')
+    model = DMTPAR().to('cuda')
     model.load_state_dict(torch.load('./weights/multitask_general_model_clahe_test2.pt'))
     model.eval()
 
