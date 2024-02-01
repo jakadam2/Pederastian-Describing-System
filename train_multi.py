@@ -45,6 +45,7 @@ def train(epochs,LR = 10 ** -3) -> None:
     model.train(True)
     print('START TRAINING')
     f.write('START TRAINING\n')
+
     for epoch in range(epochs):
         print(f'EPOCH {epoch + 1}')
         f.write(f'EPOCH {epoch + 1}\n')
@@ -54,7 +55,7 @@ def train(epochs,LR = 10 ** -3) -> None:
         f.write(f'LOSS: {epoch_loss}\n')
 
     for group in optimizer.param_groups:
-        group['lr'] /= 100
+        group['lr'] /= 80
 
     for epoch in range(epochs,2*epochs + 1):
         print(f'EPOCH {epoch + 1}')
@@ -70,4 +71,4 @@ def train(epochs,LR = 10 ** -3) -> None:
     torch.save(model.state_dict(),'./train0/weights/multitask.pt')
 
 if __name__ == '__main__':
-    train(15)
+    train(10)
