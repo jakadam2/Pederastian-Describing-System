@@ -98,11 +98,11 @@ class Classifier(nn.Module):
         self.dl3 = nn.Linear(512,128)
         self.bn3 = nn.BatchNorm1d(128)
         self.dl4 = nn.Linear(128,64)
+        self.dl5 = nn.Linear(64,num_classes)
         self.dropout = nn.Dropout(0.3)
         self.avg_pool = nn.AvgPool2d((3,3))
         self.relu = nn.ReLU()
         self.flatten = nn.Flatten()
-        self.log_softmax = nn.LogSoftmax(dim=1)
 
     def forward(self, x):
         x = self.attention_module(x)
@@ -121,6 +121,7 @@ class Classifier(nn.Module):
         x = self.dl4(x)
         x = self.relu(x)
         x = self.dropout(x)
+        x = self.dl5(x)
         return x
 
 
@@ -131,21 +132,12 @@ class DMTPAR(nn.Module):
         self.extractor = ResNetExtractor().to(device)
         self.upper_color = Classifier(11).to(device)
         self.lower_color = Classifier(11).to(device)
-        self.bag_presence = Classifier(1).to(device)
-        self.hat_presence = Classifier(1).to(device)
-        self.gender = Classifier(1).to(device)
-        self.sigmoid = nn.Sigmoid()
-        self.dl5_categorical = nn.Linear(64,11).to(device)
-        self.dl5_binary = nn.Linear(64,1).to(device)
 
     def forward(self,x):
         x = self.extractor(x)
-        bag_presence = self.sigmoid(self.dl5_binary(self.bag_presence(x)))
-        hat_presence = self.sigmoid(self.dl5_binary(self.hat_presence(x)))
-        gender = self.sigmoid(self.dl5_binary(self.gender(x)))
-        upper_color = self.dl5_categorical(self.upper_color(x))
-        lower_color = self.dl5_categorical(self.lower_color(x))
-        return upper_color,lower_color,gender,bag_presence ,hat_presence 
+        upper_color = self.upper_color(x)
+        lower_color = self.lower_color(x)
+        return upper_color,lower_color
     
 
 class DMTPARpart(nn.Module):
@@ -164,19 +156,13 @@ class DMTLoss(nn.Module):
     def __init__(self) -> None:
         super(DMTLoss,self).__init__()
         self._categorical_loss = nn.CrossEntropyLoss()
-        self._binary_loss = nn.BCELoss()
         self._num_classes = 11
 
     def forward(self,outputs,labels):
         cum_loss = 0
-
-        for j in range(labels.shape[1]):
+        for j in range(len(outputs)):
             mask = labels[:, j] != -1
-            if j < 2:
-                labels_float = labels[:,j][mask].long()
-                cum_loss += self._categorical_loss(outputs[j][mask],labels_float)
-            else:
-                output = outputs[j][mask].squeeze(1)
-                cum_loss += self._binary_loss(output,labels[:,j][mask])
+            labels_float = labels[:,j][mask].long()
+            cum_loss += self._categorical_loss(outputs[j][mask],labels_float)
 
         return cum_loss

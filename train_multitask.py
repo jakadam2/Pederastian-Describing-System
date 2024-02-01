@@ -12,8 +12,8 @@ def train_one_epoch(train_loader,optimizer,model, loss_fn):
         inputs, labels = data
         inputs, labels = inputs.to('cuda'), labels.to('cuda')
         optimizer.zero_grad()
-        upper_color,lower_color,gender,bag_presence ,hat_presence  = model(inputs)
-        loss = loss_fn([upper_color,lower_color,gender,bag_presence ,hat_presence ], labels)
+        upper_color,lower_color = model(inputs)
+        loss = loss_fn([upper_color,lower_color], labels)
         loss.backward()
         optimizer.step()
         running_loss += loss.item()
@@ -25,7 +25,7 @@ def train_one_epoch(train_loader,optimizer,model, loss_fn):
 
 
 def train(epochs,LR = 10 ** -3, early_stopping = 3) -> None:
-    f = open('./raports/train_multitask_test1_without_clahe.txt','w+')
+    f = open('./raports/train_multitask_test4_with_clahe.txt','w+')
     criterion = DMTLoss()
     model = DMTPAR()
     optimizer = torch.optim.AdamW(params=filter(lambda p: p.requires_grad, model.parameters()),lr = LR)
@@ -43,7 +43,7 @@ def train(epochs,LR = 10 ** -3, early_stopping = 3) -> None:
         epoch_loss = train_one_epoch(train_loader,optimizer,model,criterion)
         print(f'LOSS: {epoch_loss}')
         f.write(f'LOSS: {epoch_loss}\n')
-        if abs(epoch_loss-prev_loss) < 0.01:
+        if abs(epoch_loss-prev_loss) < 0.05:
             count = count + 1
             if count > early_stopping:
                 break
@@ -52,7 +52,7 @@ def train(epochs,LR = 10 ** -3, early_stopping = 3) -> None:
         prev_loss = epoch_loss
     print('TRAINING FINISHED')
     f.write('TRAINING FINISHED')
-    torch.save(model.state_dict(),'./weights/multitask_general_model_without_clahe_test1.pt')
+    torch.save(model.state_dict(),'./weights/multitask_general_model_with_clahe_test4.pt')
     ### TRAINING ON ATRIO CUES IMAGES ###
     new_train_data = CLAHEImageDataset('./data/par_datasets/training_set_atrio_cues.txt','./data/par_datasets/training_set_atrio_cues' ,transform=transform)
     new_train_loader = torch.utils.data.DataLoader(new_train_data,batch_size=8)
@@ -66,7 +66,7 @@ def train(epochs,LR = 10 ** -3, early_stopping = 3) -> None:
         epoch_loss = train_one_epoch(new_train_loader,optimizer,model,criterion)
         print(f'LOSS: {epoch_loss}')
         f.write(f'LOSS: {epoch_loss}\n')
-        if abs(epoch_loss-prev_loss) < 0.01:
+        if abs(epoch_loss-prev_loss) < 0.05:
             count = count + 1
             if count > early_stopping:
                 break
@@ -77,7 +77,7 @@ def train(epochs,LR = 10 ** -3, early_stopping = 3) -> None:
     print('TRAINING FINISHED ATRIO CUES')
     f.write('TRAINING FINISHED ATRIO CUES')
     f.close()
-    torch.save(model.state_dict(),'./weights/multitask_specific_model_without_clahe_test1.pt')
+    torch.save(model.state_dict(),'./weights/multitask_specific_model_with_clahe_test4.pt')
 
 
 if __name__ == '__main__':
