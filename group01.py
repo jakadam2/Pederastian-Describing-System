@@ -50,7 +50,7 @@ tracker = DeepOCSORT(
 )
 
 par_model = MTPAR()
-par_model.load_state_dict(torch.load('./weights/multitask_specific_model_clahe_test2.pt'))
+par_model.load_state_dict(torch.load('./weights/multitask_specific_model_with_clahe_test3.pt'))
 par_model.eval()
 transform = rw.IMAGENET1K_V1.transforms()
 parser = PredicitonParser()
@@ -94,9 +94,9 @@ while True:
             extract = orig_img[y1 + 1:y2 -1,x1 + 1:x2 - 1]
             extract = torch.from_numpy(extract.astype(np.float32))
             extract = extract.permute(2,0,1)
-            # extract = bgr.clahe(extract)
+            extract = bgr.clahe(extract)
             
-            extract = extract.permute(2,0,1)
+            # extract = extract.permute(2,0,1)
             extract = transform(extract).to('cuda').unsqueeze(0)
             upper_color,lower_color,gender,bag_presence ,hat_presence = par_model(extract)
             detected[id]([upper_color,lower_color,gender,bag_presence ,hat_presence ])

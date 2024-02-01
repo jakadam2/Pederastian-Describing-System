@@ -43,9 +43,9 @@ class Person:
         # self.gender = self._gender_chooser(torch.tensor([1-predicts[2],predicts[2]]))
         # self.hat = self._hat_chooser(torch.tensor([1-predicts[3],predicts[3]]))
         # self.bag = self._bag_chooser(torch.tensor([1-predicts[4],predicts[4]]))
-        self.gender = torch.where(predicts[2] > .5, 1.0, 0.0).int().item()
-        self.bag = torch.where(predicts[3] > .5, 1.0, 0.0).int().item()
-        self.hat = torch.where(predicts[4] > .5, 1.0, 0.0).int().item()
+        self.gender = self._gender_dict[torch.where(predicts[2] > .5, 1.0, 0.0).int().item()]
+        self.bag = self._bag_dict[torch.where(predicts[3] > .5, 1.0, 0.0).int().item()]
+        self.hat = self._hat_dict[torch.where(predicts[4] > .5, 1.0, 0.0).int().item()]
         
 
     def __str__(self) -> str:

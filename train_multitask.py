@@ -35,7 +35,7 @@ def train_one_epoch(train_loader,optimizer,model, loss_fn):
 
 
 def train(epochs,LR = 10 ** -3, early_stopping = 3) -> None:
-    f = open('./raports/train_multitask_test1_without_clahe.txt','w+')
+    f = open('./raports/train_multitask_test3_with_clahe.txt','w+')
 
     # Criterions
     criterion = MTLoss()
@@ -74,14 +74,14 @@ def train(epochs,LR = 10 ** -3, early_stopping = 3) -> None:
     print('TRAINING FINISHED')
     f.write('TRAINING FINISHED')
     #f.close()
-    torch.save(model.state_dict(),'./weights/multitask_general_model_without_clahe_test1.pt')
+    torch.save(model.state_dict(),'./weights/multitask_general_model_with_clahe_test3.pt')
 
 
     ### TRAINING ON ATRIO CUES IMAGES ###
     # model.load_state_dict(torch.load('./weights/multitask_model.pt'))
     new_train_data = ImageDataset('./data/par_datasets/training_set_atrio_cues.txt','./data/par_datasets/training_set_atrio_cues' ,transform=transform)
     new_train_loader = torch.utils.data.DataLoader(new_train_data,batch_size=8)
-    model.load_state_dict(torch.load('./weights/multitask_general_model_without_clahe_test1.pt'))
+    model.load_state_dict(torch.load('./weights/multitask_general_model_with_clahe_test3.pt'))
     new_optimizer = torch.optim.AdamW(params=filter(lambda p: p.requires_grad, model.parameters()),lr = LR*0.1)
     prev_loss = 0
     count = 0
@@ -104,8 +104,8 @@ def train(epochs,LR = 10 ** -3, early_stopping = 3) -> None:
     print('TRAINING FINISHED ATRIO CUES')
     f.write('TRAINING FINISHED ATRIO CUES')
     f.close()
-    torch.save(model.state_dict(),'./weights/multitask_specific_model_without_clahe_test1.pt')
+    torch.save(model.state_dict(),'./weights/multitask_specific_model_with_clahe_test3.pt')
 
 
 if __name__ == '__main__':
-    train(15)
+    train(20)

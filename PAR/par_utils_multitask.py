@@ -51,7 +51,7 @@ class ImageDataset(Dataset):
         image = Image.open(img_path)
         image = self.pll(image).to(torch.float32)
         
-        # image = self.bgr.clahe(image)
+        image = self.bgr.clahe(image)
         
         label = self.img_labels.iloc[idx,1:6]
         label = torch.tensor(label,dtype= torch.float32)

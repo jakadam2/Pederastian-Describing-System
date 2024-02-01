@@ -20,7 +20,7 @@ def calculate_accuracy(model, data_loader):
     with torch.no_grad():
         for inputs, labels in data_loader:
             inputs = inputs.to('cuda')
-            upper_color, lower_color, bag_presence, hat_presence, gender = model(inputs)
+            upper_color, lower_color, gender, bag_presence, hat_presence = model(inputs)
             for j in range(len(labels[0, :])):
                 if j == 0:
                     Y_upper_color.append(labels[:, j])
@@ -32,14 +32,15 @@ def calculate_accuracy(model, data_loader):
                     outputs = F.softmax(lower_color, dim=1)
                     Y_hat_lower_color.append(torch.argmax(outputs, dim=1))
                 elif j == 2:
-                    Y_bag.append(labels[:, j])
-                    Y_hat_bag.append(torch.where(bag_presence > .5, 1.0, 0.0).int())
-                elif j == 3:
-                    Y_hat.append(labels[:, j])
-                    Y_hat_hat.append(torch.where(hat_presence > .5, 1.0, 0.0).int())
-                elif j == 4:
                     Y_gender.append(labels[:, j])
                     Y_hat_gender.append(torch.where(gender > .5, 1.0, 0.0).int())
+                elif j == 3:
+                    Y_bag.append(labels[:, j])
+                    Y_hat_bag.append(torch.where(bag_presence > .5, 1.0, 0.0).int())
+                elif j == 4:
+                    Y_hat.append(labels[:, j])
+                    Y_hat_hat.append(torch.where(hat_presence > .5, 1.0, 0.0).int())
+
             # Y.append(labels)
             # inputs = inputs.to('cuda')
             # features = extractor(inputs)
@@ -72,7 +73,7 @@ def calculate_accuracy(model, data_loader):
 
 def validate():
     model = MTPAR().to('cuda')
-    model.load_state_dict(torch.load('./weights/multitask_general_model_clahe_test2.pt'))
+    model.load_state_dict(torch.load('./weights/multitask_general_model_with_clahe_test3.pt'))
     model.eval()
 
     transform = models.ConvNeXt_Small_Weights.IMAGENET1K_V1.transforms(antialias=True)
