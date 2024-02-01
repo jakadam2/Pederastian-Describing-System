@@ -67,13 +67,16 @@ class ImageDataset(Dataset):
 
 class MTImageDataset(Dataset):
 
-    def __init__(self, annotations_file, img_dir,transform=None, target_transform=None,):
+    def __init__(self, annotations_file, img_dir,transform=None, target_transform=None,clahe = False):
         self.img_labels = pd.read_csv(annotations_file)
         self.img_labels = self.img_labels.sample(frac=1)
         self.img_dir = img_dir
         self.transform = transform
         self.target_transform = target_transform
         self.pll = transforms.Compose([transforms.PILToTensor()])
+        if clahe:
+            self._bgr = BgRemover()
+        self._clahe = clahe
 
     def __len__(self):
         return len(self.img_labels)
@@ -82,7 +85,9 @@ class MTImageDataset(Dataset):
         img_path = os.path.join(self.img_dir, self.img_labels.iloc[idx, 0])
         image = Image.open(img_path)
         image = self.pll(image).to(torch.float32)
-        label = self.img_labels.iloc[idx,1:6]
+        if self._clahe:
+            image = self._bgr.clahe(image)
+        label = self.img_labels.iloc[idx,3:6]
         label = torch.tensor(label,dtype= torch.float32)
         if label[0] != -1:
             label[0] -= 1

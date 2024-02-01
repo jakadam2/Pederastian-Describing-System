@@ -38,9 +38,6 @@ class AMTPAR(nn.Module):
         return_node = {'layer4.1':'relu_1'}
         model = models.resnet18(models.ResNet18_Weights.IMAGENET1K_V1).to(device)
         self.extractor = create_feature_extractor(model, return_node)
-        self.extractor = create_feature_extractor(model, return_node)
-        self.upper_color = AMTPartClassifier(11).to(device)
-        self.lower_color = AMTPartClassifier(11).to(device)
         self.bag = AMTPartClassifier(2).to(device)
         self.hat = AMTPartClassifier(2).to(device)
         self.gender = AMTPartClassifier(2).to(device)
@@ -50,9 +47,7 @@ class AMTPAR(nn.Module):
         bag = self.bag(features)
         hat = self.hat(features)
         gender = self.gender(features)
-        upper_color = self.upper_color(features)
-        lower_color = self.lower_color(features)
-        return torch.hstack((upper_color,lower_color,gender,hat,bag))
+        return torch.hstack((gender,hat,bag))
 
 
 class AMTPARpart(nn.Module):
@@ -68,7 +63,7 @@ class AMTPARpart(nn.Module):
 
 class AMTLoss(nn.Module):
 
-    steps = [11,11,2,2,2]
+    steps = [2,2,2]
 
     def __init__(self) -> None:
         super(AMTLoss,self).__init__()
