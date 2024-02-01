@@ -3,6 +3,7 @@ from typing import Any
 import torch
 from queue import PriorityQueue
 
+
 class PredictChooser(ABC):
 
     def __init__(self,feature_dim,feature_dict) -> None:

@@ -14,19 +14,17 @@ class BgRemover():
     _BLACK = [0, 0, 0]
     _WHITE = [1, 1, 1]
     
-    def __init__(self): 
-        # Loads the model 
-        #model = models.segmentation.deeplabv3_resnet101(pretrained=True)
-        #model.eval()
-        #self.model = model
+    def __init__(self,model_init = False): 
+        if model_init:
+            model = models.segmentation.deeplabv3_resnet101(pretrained=True)
+            model.eval()
+            self.model = model
         # simple transform that makes an image to tensor 
         self.simple_transform = T.Compose([T.ToTensor()])
         # transform that normalizes the tensor so it's ready for the model 
-        # self.normalization_transform = T.Compose([T.ToPILImage(), T.ToTensor(), T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])])
         self.normalization_transform = T.Compose([T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])])
         self.imTrans = ImageTransformations(True, read_image_from_file=False)
 
-    
     def _img2tensor(self, img_path, normalization=True):
         img = Image.open(img_path).convert("RGB")
         if normalization == True: 
@@ -43,7 +41,6 @@ class BgRemover():
         if output_img_path is not None: 
             img.save(output_img_path)
         return img
-    
     
     def _getMask(self, tensor):
         with torch.no_grad():
@@ -77,7 +74,6 @@ class BgRemover():
         out = self._bgRemove(in_tensor, mask, colour)
         return out
     
-
     def clahe(self, tensor):
         # prepares the tensor for opencv
         img = self._tensor2img(tensor)
@@ -93,7 +89,6 @@ class BgRemover():
         tensor = tensor.permute(2, 0, 1)
         return tensor
 
-
     # deprecato da me, non lo usate 
     def equalize(self, image_tensor):
         image_tensor = torch.clamp(image_tensor, 0, 1)
@@ -103,36 +98,3 @@ class BgRemover():
         # image_tensor = transform(image_tensor)
         equalized_image = T.functional.equalize(image_tensor)
         return equalized_image.unsqueeze(0)
-
-    
-
-# ----------- USAGE ---------------
-
-# def main(): 
-#     img_path = 'test.png'
-#     out_path = 'output.jpg'
-#     out_tensor_path = 'out_tensor.jpg'
-
-#     bgr = bgRemover()
-#     # from image ------------
-#     bgr.bgr_img(img_path, out_path, bgr._WHITE)
-
-
-#     # from tensor -----------
-#     tensor = bgr._img2tensor(img_path, normalization=False) # creates a tensr for test 
-
-#     tensor = bgr.clahe(tensor)  # clahe
-#     tensor = bgr.bgr_tensor(tensor, bgr._BLACK)  # background removal 
-
-#     bgr._tensor2img(tensor, out_tensor_path)
-    
-    
-
-    
-
-
-# if __name__ == '__main__':
-#     main()
-
-
-

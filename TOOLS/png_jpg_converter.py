@@ -2,6 +2,7 @@ from PIL import Image
 import os
 import argparse
 
+
 def convert_png_to_jpg():
     # argparser 
     parser = argparse.ArgumentParser(description='input and output folders')
@@ -30,8 +31,10 @@ def convert_png_to_jpg():
             # Convert and save as JPG
             img.convert("RGB").save(jpg_path)
 
+
 def main(): 
     convert_png_to_jpg()
+
 
 if __name__ == "__main__":
     # Call the function to convert PNG to JPG

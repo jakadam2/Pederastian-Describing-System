@@ -119,7 +119,6 @@ class ImageTransformations:
            b_clahe_equalized = cv2.createCLAHE(clipLimit=clip_limit, tileGridSize=grid_size).apply(b)
            return ImageTransformations(cv2.merge([r_clahe_equalized, g_clahe_equalized, b_clahe_equalized]),self.RGB,False)
         
-
     def binary_treshold(self,treshold):
         if self.RGB==False:
             return ImageTransformations(cv2.threshold(self.image, treshold, 255, cv2.THRESH_BINARY)[1],self.RGB,False)

@@ -2,12 +2,6 @@ import json
 from os.path import join
 
 
-class RoiReaderEmulator:
-    @staticmethod
-    def load(*args,**kwargs) -> None:
-        return RoiEmulator(),RoiEmulator()
-
-
 class RoiReader:
     # the idea is that roi knows real size of themselfs in pixel(to make a hetmetic containing check) so load method cannot be static
     # the second option is make a load static without giving a real size and give a Roi object method update to give them real size
@@ -24,13 +18,7 @@ class RoiReader:
             roi1 = Roi(roi1_config['x'],roi1_config['y'],roi1_config['w'],roi1_config['h'],self._size_x,self._size_y)
             roi2 = Roi(roi2_config['x'],roi2_config['y'],roi2_config['w'],roi2_config['h'],self._size_x,self._size_y)
             return roi1,roi2
-
-
-class RoiEmulator:
-    @staticmethod
-    def include(bbox) -> bool:
-        return True
-
+        
 
 class Roi:
     # x1,y1 left uppper corner

@@ -13,11 +13,8 @@ from ultralytics import YOLO
 from boxmot import DeepOCSORT
 import torch
 
-from PAR.multitask_classifier import DMTPAR,DMTPARpart
+from PAR.multi_task import DMTPAR,DMTPARpart,AMTPAR,AMTPARpart
 from torchvision.models import ResNet18_Weights as rw
-from PAR.multitask_classifier import PredicitonParser
-
-from PAR.multi_task import AMTPAR,AMTPARpart
 
 from TOOLS.argparser import Parser
 from TOOLS.bg_remover import BgRemover
@@ -35,7 +32,6 @@ video_name = arguments.video
 viedo_file = join('./data','videos',video_name)
 cap = cv.VideoCapture(viedo_file)
 
-
 model_file = join('./weights','yolov8l.pt')
 model = YOLO(model_file)
 
@@ -45,7 +41,7 @@ detected = {}
 result_writer = ResultWriter(arguments.results)
 
 tracker = DeepOCSORT( 
-    model_weights= Path('./weights/osnet_ain_x1_0_msmt17.pt'), # which ReID model to use
+    model_weights= Path('./weights/osnet_ain_x1_0_msmt17.pt'),
     device='cuda:0',
     fp16=True,
 )
@@ -54,12 +50,13 @@ par_modeld = DMTPAR()
 par_modeld.load_state_dict(torch.load('./weights/color_multi.pt'))
 par_modeld.eval()
 color_model = DMTPARpart(par_modeld)
+
 par_model = AMTPAR()
 par_model.load_state_dict(torch.load('./weights/multi_model.pt'))
 par_model.eval()
 attr_model = AMTPARpart(par_model)
+
 transform = rw.IMAGENET1K_V1.transforms()
-parser = PredicitonParser()
 
 SPARSE = 50
 iterator = 0
@@ -93,10 +90,10 @@ while True:
         bbox = track[0:4].astype(int)
         id = track[4].astype(int)
 
-        if id not in detected.keys() or iterator == SPARSE: # that means that we see this pearson first time 
+        if id not in detected.keys() or iterator == SPARSE:
             x1, y1, x2, y2 = bbox
             extract = orig_img[y1 + 1:y2 -1,x1 + 1:x2 - 1]
-            detected[id] = Person(int(id)) # this object should store info about person
+            detected[id] = Person(int(id))
             extract = orig_img[y1 + 1:y2 -1,x1 + 1:x2 - 1]
             extract = torch.from_numpy(extract.astype(np.float32))
             extract = extract.permute(2,0,1)
@@ -180,7 +177,3 @@ for id in detected:
     detected[id].end_rois()
       
 result_writer.write_ans(detected.values())
-
-# TODO: think about when and how decide about pederastian features !!!!!!!!!!!!!!!!!!!
-# TODO: think about contrast 
-# TODO: think about blinking bboxes

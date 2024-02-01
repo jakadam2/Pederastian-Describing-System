@@ -3,7 +3,6 @@ Simple CBAM attention module from paper https://arxiv.org/pdf/1807.06521.pdf
 During wrtiting this code we follow official github implementation https://github.com/Jongchan/attention-module/tree/master 
 
 '''
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F 
@@ -54,4 +53,3 @@ class CBAM(nn.Module):
         attention = self.channel_module(x)
         attention = self.spatial_module(attention)
         return attention + x
-

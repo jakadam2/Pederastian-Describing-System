@@ -22,14 +22,14 @@ class Person:
 
     def __init__(self,id) -> None:
         self.id = id
-        self.roi1_time = 0.0
-        self.roi2_time = 0.0
-        self.roi1_passes = 0
-        self.roi2_passes = 0
+        self.roi1_persistence_time = 0.0
+        self.roi2_persistence_time = 0.0
+        self.roi1_passages = 0
+        self.roi2_passages = 0
         self._inroi1 = False
         self._inroi2 = False
         self._pass_time1 = 0
-        self._pass_time1 = 0
+        self._pass_time2 = 0
         self._bag_chooser = self._chooser(2,self._bag_dict)
         self._hat_chooser = self._chooser(2,self._hat_dict)
         self._gender_chooser = self._chooser(2,self._gender_dict)
@@ -42,12 +42,6 @@ class Person:
         self.gender = self._gender_chooser(predicts[2].squeeze(0))
         self.hat = self._hat_chooser(predicts[3].squeeze(0))
         self.bag = self._bag_chooser(predicts[4].squeeze(0))
-
-    def __str__(self) -> str:
-        return f'Person({self.id})'
-    
-    def __repr__(self) -> str:
-        return f'Person({self.id})'
      
     def _startRoi1(self) -> None:
         if self._inroi1:
@@ -59,9 +53,8 @@ class Person:
     def _stopRoi1(self) -> None:
         if not self._inroi1:
             raise LookupError(f'{self} is not in roi1')
-        
-        self.roi1_time += (perf_counter() - self._roi1_ptime)
-        self.roi1_passes += 1
+        self.roi1_persistence_time += (perf_counter() - self._roi1_ptime)
+        self.roi1_passages += 1
         self._inroi1 = False
 
     def _startRoi2(self) -> None:
@@ -74,19 +67,16 @@ class Person:
     def _stopRoi2(self) -> None:
         if not self._inroi2:
             raise LookupError(f'{self} is not in roi2')
-        
-        self.roi2_time += (perf_counter() - self._roi2_ptime)
-        self.roi2_passes += 1
+        self.roi2_persistence_time += (perf_counter() - self._roi2_ptime)
+        self.roi2_passages += 1
         self._inroi2 = False
 
     def is_in_roi1(self,presence) -> None:
         if presence == self._inroi1:
             return
-        
         elif presence:
             self._pass_time1 = 0
             self._startRoi1()
-
         else:
             self._pass_time1 += 1
             if self._pass_time1 == self._tollerance_time:
@@ -95,10 +85,13 @@ class Person:
     def is_in_roi2(self,presence) -> None:
         if presence == self._inroi2:
             return
-        elif presence == True:
+        elif presence:
+            self._pass_time2 = 0
             self._startRoi2()
         else:
-            self._stopRoi2()
+            self._pass_time2 += 1
+            if self._pass_time2 == self._tollerance_time:
+                self._stopRoi2()
 
     def end_rois(self):
         if self._inroi1:
