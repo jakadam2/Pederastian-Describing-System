@@ -17,7 +17,7 @@ class Person:
     _bag_dict = {0:False,1:True}
     _hat_dict = {0:False,1:True}
     _annoucer = TextAnnoucer()
-    _tollerance_time = 5
+    _tollerance_time = 10
     _chooser = MaxPredictChooser
 
     def __init__(self,id) -> None:

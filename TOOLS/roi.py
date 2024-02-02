@@ -39,10 +39,6 @@ class Roi:
     def include(self,bbox) -> bool:       
         #bbox format: [x1,y1,x2,y2]
         x1,y1,x2,y2 = bbox
-        bbx = (x1,x2)
-        bby = (y1,y2)
-        for x in bbx:
-            for y in bby:
-                if self.__include_point(x,y):
-                    return True
-        return False
+        cx = (x1 + x2)//2
+        cy = (y1 + y2)//2
+        return self.__include_point(cx,cy)

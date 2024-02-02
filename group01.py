@@ -171,7 +171,7 @@ while True:
     )
 
     cv.imshow('People Detection Video',img)
-    cv.waitKey(1)
+    cv.waitKey(0)
 
 for id in detected:
     detected[id].end_rois()
