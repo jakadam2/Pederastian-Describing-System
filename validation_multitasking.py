@@ -25,7 +25,7 @@ def calculate_accuracy(model, data_loader):
     with torch.no_grad():
         for inputs, labels in data_loader:
             inputs = inputs.to('cuda')
-            upper_color, lower_color, gender, bag_presence, hat_presence = model(inputs)
+            upper_color, lower_color = model(inputs)
             for j in range(len(labels[0, :])):
                 if j == 0:
                     Y_upper_color.append(labels[:, j])
@@ -36,15 +36,15 @@ def calculate_accuracy(model, data_loader):
                     Y_lower_color.append(labels[:, j])
                     outputs = F.softmax(lower_color, dim=1)
                     Y_hat_lower_color.append(torch.argmax(outputs, dim=1))
-                elif j == 2:
-                    Y_bag.append(labels[:, j])
-                    Y_hat_bag.append(torch.where(bag_presence > .5, 1.0, 0.0).int())
-                elif j == 3:
-                    Y_hat.append(labels[:, j])
-                    Y_hat_hat.append(torch.where(hat_presence > .5, 1.0, 0.0).int())
-                elif j == 4:
-                    Y_gender.append(labels[:, j])
-                    Y_hat_gender.append(torch.where(gender > .5, 1.0, 0.0).int())
+                # elif j == 2:
+                #     Y_bag.append(labels[:, j])
+                #     Y_hat_bag.append(torch.where(bag_presence > .5, 1.0, 0.0).int())
+                # elif j == 3:
+                #     Y_hat.append(labels[:, j])
+                #     Y_hat_hat.append(torch.where(hat_presence > .5, 1.0, 0.0).int())
+                # elif j == 4:
+                #     Y_gender.append(labels[:, j])
+                #     Y_hat_gender.append(torch.where(gender > .5, 1.0, 0.0).int())
             # Y.append(labels)
             # inputs = inputs.to('cuda')
             # features = extractor(inputs)
@@ -52,12 +52,12 @@ def calculate_accuracy(model, data_loader):
             # outputs = F.softmax(outputs, dim=1)
             # Y_hat.append(torch.argmax(outputs, dim=1) + 1)
 
-    Y_bag = torch.concatenate(Y_bag).cpu()
-    Y_hat_bag = torch.concatenate(Y_hat_bag).cpu()
-    Y_hat = torch.concatenate(Y_hat).cpu()
-    Y_hat_hat = torch.concatenate(Y_hat_hat).cpu()
-    Y_gender = torch.concatenate(Y_gender).cpu()
-    Y_hat_gender = torch.concatenate(Y_hat_gender).cpu()
+    # Y_bag = torch.concatenate(Y_bag).cpu()
+    # Y_hat_bag = torch.concatenate(Y_hat_bag).cpu()
+    # Y_hat = torch.concatenate(Y_hat).cpu()
+    # Y_hat_hat = torch.concatenate(Y_hat_hat).cpu()
+    # Y_gender = torch.concatenate(Y_gender).cpu()
+    # Y_hat_gender = torch.concatenate(Y_hat_gender).cpu()
     Y_lower_color = torch.concatenate(Y_lower_color).cpu()
     Y_hat_lower_color = torch.concatenate(Y_hat_lower_color).cpu()
     Y_upper_color = torch.concatenate(Y_upper_color).cpu()
@@ -65,17 +65,17 @@ def calculate_accuracy(model, data_loader):
 
     acc_upper_color = (Y_upper_color==Y_hat_upper_color).float().mean().item()
     acc_lower_color = (Y_lower_color==Y_hat_lower_color).float().mean().item()
-    acc_bag = (Y_bag==Y_hat_bag).float().mean().item()
-    acc_hat = (Y_hat==Y_hat_hat).float().mean().item()
-    acc_gender = (Y_gender==Y_hat_gender).float().mean().item()
+    # acc_bag = (Y_bag==Y_hat_bag).float().mean().item()
+    # acc_hat = (Y_hat==Y_hat_hat).float().mean().item()
+    # acc_gender = (Y_gender==Y_hat_gender).float().mean().item()
 
     conf_matrix(Y_upper_color, Y_hat_upper_color, "upper_color")
     conf_matrix(Y_lower_color, Y_hat_lower_color, "lower_color")
-    conf_matrix(Y_bag, Y_hat_bag, "bag")
-    conf_matrix(Y_hat, Y_hat_hat, "hat")
-    conf_matrix(Y_gender, Y_hat_gender, "gender")
+    # conf_matrix(Y_bag, Y_hat_bag, "bag")
+    # conf_matrix(Y_hat, Y_hat_hat, "hat")
+    # conf_matrix(Y_gender, Y_hat_gender, "gender")
 
-    return acc_upper_color, acc_lower_color, acc_bag, acc_hat, acc_gender
+    return acc_upper_color, acc_lower_color #, acc_bag, acc_hat, acc_gender
 
 
 def conf_matrix(y_true, y_pred, name_class):
@@ -84,32 +84,33 @@ def conf_matrix(y_true, y_pred, name_class):
     plt.figure(figsize=(8, 6))
     if name_class == "upper_color" or name_class == "lower_color":
         sns.heatmap(cm, annot=True, fmt="d", cmap="Blues", xticklabels=['black', 'blue','brown','gray','green','orange', 'pink','purple','red', 'white','yellow'], yticklabels=['black', 'blue','brown','gray','green','orange', 'pink','purple','red', 'white','yellow'])
-    elif name_class == "gender":
-        sns.heatmap(cm, annot=True, fmt="d", cmap="Blues", xticklabels=['male', 'female'], yticklabels=['male', 'female'])
-    else:
-        sns.heatmap(cm, annot=True, fmt="d", cmap="Blues", xticklabels=['false', 'true'], yticklabels=['false', 'true'])
+    # elif name_class == "gender":
+    #     sns.heatmap(cm, annot=True, fmt="d", cmap="Blues", xticklabels=['male', 'female'], yticklabels=['male', 'female'])
+    # else:
+    #     sns.heatmap(cm, annot=True, fmt="d", cmap="Blues", xticklabels=['false', 'true'], yticklabels=['false', 'true'])
     plt.xlabel('Predicted')
     plt.ylabel('True')
     plt.title('Confusion Matrix')
-    save_path = "./raports/" + name_class + ".png"
+    save_path = "./raports/" + name_class + "_test4.png"
     plt.savefig(save_path)
     print(f"Confusion matrix saved to {save_path}")
 
 
 def validate():
     model = DMTPAR().to('cuda')
-    model.load_state_dict(torch.load('./weights/multitask_specific_model_with_clahe_test3.pt'))
+    model.load_state_dict(torch.load('./weights/multitask_specific_model_with_clahe_test4.pt'))
     model.eval()
 
     transform = models.ConvNeXt_Small_Weights.IMAGENET1K_V1.transforms(antialias=True)
     validate_data = CLAHEImageDataset('./data/par_datasets/validation_set.txt','./data/par_datasets/validation_set/',transform=transform)
     validate_loader = torch.utils.data.DataLoader(validate_data,batch_size=64)
-    acc_upper_color, acc_lower_color, acc_bag, acc_hat, acc_gender = calculate_accuracy(model, validate_loader)
+    # acc_upper_color, acc_lower_color, acc_bag, acc_hat, acc_gender = calculate_accuracy(model, validate_loader)
+    acc_upper_color, acc_lower_color= calculate_accuracy(model, validate_loader)
     print("accuracy upper color:", acc_upper_color)
     print("accuracy lower color:", acc_lower_color)
-    print("accuracy bag:", acc_bag)
-    print("accuracy hat:", acc_hat)
-    print("accuracy gender:", acc_gender)
+    # print("accuracy bag:", acc_bag)
+    # print("accuracy hat:", acc_hat)
+    # print("accuracy gender:", acc_gender)
 
 
 # def validate():
