@@ -18,6 +18,7 @@ from torchvision.models import ResNet18_Weights as rw
 
 from TOOLS.argparser import Parser
 from TOOLS.bg_remover import BgRemover
+from TOOLS.display import *
 
 bgr = BgRemover()
 
@@ -108,8 +109,8 @@ while True:
 
         detected[id].is_in_roi1(roi1.include(bbox))
         detected[id].is_in_roi2(roi2.include(bbox))
-        present_people.add(id)  
-        
+        present_people.add(id)
+          
         if roi1.include(bbox): 
             color  = (255,0,0)
         elif roi2.include(bbox):
@@ -122,163 +123,9 @@ while True:
 
         roi1_passages += detected[id].roi1_passages
         roi2_passages += detected[id].roi2_passages
-
-
-
-
-        width = 80 if id >= 10 else 40
-        gender_text = 'F' if detected[id].gender == 'female' else 'M'
-        bag_text = 'Bag' if detected[id].bag else 'No Bag'
-        hat_text = 'Hat' if detected[id].hat else 'No Hat'
-        #bbox
-        img = cv.rectangle(
-                img,
-                (bbox[0], bbox[1]),
-                (bbox[2], bbox[3]),
-                color,
-                thickness
-            )
-        #background for ID
-        img = cv.rectangle(
-                img,
-                (bbox[0], bbox[1]),
-                (bbox[0] + width,bbox[1] + 70),
-                (255,255,255),
-                thickness = -1
-            )
-        #ID on this background
-        cv.putText(
-                img,
-                f'{id}',
-                (bbox[0], bbox[1] + 50),
-                cv.FONT_HERSHEY_SIMPLEX,
-                2,
-                color,
-                3
-            )
-        #background for attributes
-        img = cv.rectangle(
-                img,
-                (bbox[0], bbox[3]),
-                (bbox[2] + 20,bbox[3] + 60),
-                (255,255,255),
-                thickness = -1
-            )
-        #gender  
-        cv.putText(
-                img,
-                f'Gender:{gender_text}',
-                (bbox[0] + 2, bbox[3] + 12),
-                cv.FONT_HERSHEY_SIMPLEX,
-                fontscale,
-                (0,0,0),
-                2
-            )
-        #bag hat
-        cv.putText(
-                img,
-                f'{bag_text} {hat_text}',
-                (bbox[0] + 2, bbox[3] + 29),
-                cv.FONT_HERSHEY_SIMPLEX,
-                fontscale,
-                (0,0,0),
-                2
-            )    
-        #colors
-        cv.putText(
-                img,
-                f'U-L:{detected[id].upper_color}-{detected[id].lower_color}',
-                (bbox[0] + 2, bbox[3] + 46),
-                cv.FONT_HERSHEY_SIMPLEX,
-                fontscale,
-                (0,0,0),
-                2
-            )
+        img = draw_person(img,detected[id],bbox,color)
     #background for general
-    img = cv.rectangle(
-            img,
-            (0,0),
-            (400,200),
-            (255,255,255),
-            thickness = -1
-        )   
-    #people in roi
-    cv.putText(
-            img,
-            f'People in ROI:{people_in_rois}',
-            (2, 46),
-            cv.FONT_HERSHEY_SIMPLEX,
-            1,
-            (0,0,0),
-            2
-        )
-    #present people
-    cv.putText(
-        img,
-        f'Total perons:{len(present_people)}',
-        (2, 80),
-        cv.FONT_HERSHEY_SIMPLEX,
-        1,
-        (0,0,0),
-        2
-    )  
-    #roi1 passages
-    cv.putText(
-        img,
-        f'Passages in ROI1:{roi1_passages}',
-        (2, 114),
-        cv.FONT_HERSHEY_SIMPLEX,
-        1,
-        (0,0,0),
-        2
-    )   
-    #roi2 passages
-    cv.putText(
-        img,
-        f'Passages in ROI2:{roi2_passages}',
-        (2, 148),
-        cv.FONT_HERSHEY_SIMPLEX,
-        1,
-        (0,0,0),
-        2
-    )
-    #ROI1
-    img = cv.rectangle(
-            img,
-            roi1.bbox[0],
-            roi1.bbox[1],
-            (0,  0,0),
-            thickness = 3
-        )
-    #ROI2
-    img = cv.rectangle(
-        img,
-        roi2.bbox[0],
-        roi2.bbox[1],
-        (0,  0,0),
-        thickness = 3
-    )
-    #ROI2 digit
-    cv.putText(
-        img,
-        f'2',
-        (roi2.bbox[0][0] + 2,roi2.bbox[0][1] + 70),
-        cv.FONT_HERSHEY_SIMPLEX,
-        3,
-        (0,0,0),
-        2
-    )
-    #ROI1 digit
-    cv.putText(
-        img,
-        f'1',
-        (roi1.bbox[0][0] + 2,roi1.bbox[0][1] + 70),
-        cv.FONT_HERSHEY_SIMPLEX,
-        3,
-        (0,0,0),
-        2
-    )
-
+    img = draw_general(img,people_in_rois,len(present_people),roi1_passages,roi2_passages,roi1,roi2)
     for id in detected:
         if id not in present_people:
             detected[id].is_in_roi1(False)
