@@ -173,7 +173,7 @@ while True:
     cv.namedWindow('People Detection Video', cv.WINDOW_NORMAL)
     # cv.resizeWindow("People Detection Video", 1080, 1920) 
     cv.imshow('People Detection Video',img)
-    cv.waitKey(1)
+    cv.waitKey(0)
 
 for id in detected:
     detected[id].end_rois()
