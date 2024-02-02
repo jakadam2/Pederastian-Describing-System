@@ -71,7 +71,6 @@ def draw_person(img,person,bbox,color):
             (0,0,0),
             2
         )
-    
     return img
 
 
@@ -97,7 +96,7 @@ def draw_general(img,people_in_rois,people_amount,roi1_passages,roi2_passages,ro
     #present people
     cv.putText(
         img,
-        f'Total perons:{people_amount}',
+        f'Total persons:{people_amount}',
         (2, 80),
         cv.FONT_HERSHEY_SIMPLEX,
         1,

@@ -17,8 +17,11 @@ class Person:
     _bag_dict = {0:False,1:True}
     _hat_dict = {0:False,1:True}
     _annoucer = TextAnnoucer()
-    _tollerance_time = 1
+    _tollerance_time = 10
     _chooser = MaxPredictChooser
+    class_passages_roi1 = 0
+    class_passages_roi2 = 0
+    in_roi_persons = 0
 
     def __init__(self,id) -> None:
         self.id = id
@@ -49,6 +52,7 @@ class Person:
         self._roi1_ptime = perf_counter()
         self._inroi1 = True
         self._annoucer(self.id,'roi1')
+        Person.in_roi_persons += 1
 
     def _stopRoi1(self) -> None:
         if not self._inroi1:
@@ -56,6 +60,7 @@ class Person:
         self.roi1_persistence_time += (perf_counter() - self._roi1_ptime)
         self.roi1_passages += 1
         self._inroi1 = False
+        Person.in_roi_persons -= 1
 
     def _startRoi2(self) -> None:
         if self._inroi2:
@@ -63,12 +68,16 @@ class Person:
         self._roi2_ptime = perf_counter()
         self._inroi2 = True
         self._annoucer(self.id,'roi2')
+        Person.in_roi_persons += 1
+ 
 
     def _stopRoi2(self) -> None:
         if not self._inroi2:
-            raise LookupError(f'{self} is not in roi2')
+            raise LookupError(f'{self.id} is not in roi2')
         self.roi2_persistence_time += (perf_counter() - self._roi2_ptime)
         self.roi2_passages += 1
+        Person.class_passages_roi2 += 1
+        Person.in_roi_persons -= 1
         self._inroi2 = False
 
     def is_in_roi1(self,presence) -> None:

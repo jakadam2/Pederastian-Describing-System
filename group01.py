@@ -86,9 +86,6 @@ while True:
 
     tracks= tracker.update(detections,orig_img)
     present_people = set()
-    people_in_rois = 0
-    roi1_passages = 0
-    roi2_passages = 0
     for track in tracks:
         bbox = track[0:4].astype(int)
         id = track[4].astype(int)
@@ -96,7 +93,8 @@ while True:
         if id not in detected.keys() or iterator == SPARSE:
             x1, y1, x2, y2 = bbox
             extract = orig_img[y1 + 1:y2 -1,x1 + 1:x2 - 1]
-            detected[id] = Person(int(id))
+            if id not in detected.keys():
+                detected[id] = Person(int(id))
             extract = orig_img[y1 + 1:y2 -1,x1 + 1:x2 - 1]
             extract = torch.from_numpy(extract.astype(np.float32))
             extract = extract.permute(2,0,1)
@@ -118,20 +116,13 @@ while True:
         else:
             color = (0, 0, 255)
 
-        if detected[id].in_rois:
-            people_in_rois += 1
-
-        roi1_passages += detected[id].roi1_passages
-        roi2_passages += detected[id].roi2_passages
         img = draw_person(img,detected[id],bbox,color)
-    #background for general
-    img = draw_general(img,people_in_rois,len(present_people),roi1_passages,roi2_passages,roi1,roi2)
+    img = draw_general(img,Person.in_roi_persons,len(present_people),Person.class_passages_roi1,Person.class_passages_roi2,roi1,roi2)
     for id in detected:
         if id not in present_people:
             detected[id].is_in_roi1(False)
             detected[id].is_in_roi2(False)
     cv.namedWindow('People Detection Video', cv.WINDOW_NORMAL)
-    # cv.resizeWindow("People Detection Video", 1080, 1920) 
     cv.imshow('People Detection Video',img)
     cv.waitKey(0)
 
