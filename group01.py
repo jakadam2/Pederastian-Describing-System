@@ -47,7 +47,7 @@ tracker = DeepOCSORT(
 )
 
 par_modeld = DMTPAR()
-par_modeld.load_state_dict(torch.load('./weights/color_multi.pt'))
+par_modeld.load_state_dict(torch.load('./weights/multitask_specific_model_with_clahe_test3.pt'))
 par_modeld.eval()
 color_model = DMTPARpart(par_modeld)
 
@@ -170,6 +170,8 @@ while True:
         3
     )
 
+    cv.namedWindow('People Detection Video', cv.WINDOW_NORMAL)
+    # cv.resizeWindow("People Detection Video", 1080, 1920) 
     cv.imshow('People Detection Video',img)
     cv.waitKey(1)
 

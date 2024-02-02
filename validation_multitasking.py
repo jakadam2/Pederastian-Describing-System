@@ -2,8 +2,8 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 # from PAR.convnext_extractor import ConvexNextExtractor
-from PAR.multitask_classifier import DMTPAR
-from PAR.par_utils_multitask import ImageDataset
+from PAR.multi_task import DMTPAR
+from PAR.par_utils import CLAHEImageDataset
 import torchvision.models as models
 import torch.nn.functional as F
 
@@ -72,11 +72,11 @@ def calculate_accuracy(model, data_loader):
 
 def validate():
     model = DMTPAR().to('cuda')
-    model.load_state_dict(torch.load('./weights/multitask_general_model_clahe_test2.pt'))
+    model.load_state_dict(torch.load('./weights/multitask_general_model_with_clahe_test3.pt'))
     model.eval()
 
     transform = models.ConvNeXt_Small_Weights.IMAGENET1K_V1.transforms(antialias=True)
-    validate_data = ImageDataset('./data/par_datasets/validation_set.txt','./data/par_datasets/validation_set/',transform=transform)
+    validate_data = CLAHEImageDataset('./data/par_datasets/validation_set.txt','./data/par_datasets/validation_set/',transform=transform)
     validate_loader = torch.utils.data.DataLoader(validate_data,batch_size=64)
     acc_upper_color, acc_lower_color, acc_bag, acc_hat, acc_gender = calculate_accuracy(model, validate_loader)
     print("accuracy upper color:", acc_upper_color)
