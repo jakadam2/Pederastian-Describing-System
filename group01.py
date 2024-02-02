@@ -47,7 +47,7 @@ tracker = DeepOCSORT(
 )
 
 par_modeld = DMTPAR()
-par_modeld.load_state_dict(torch.load('./weights/multitask_specific_model_with_clahe_test3.pt'))
+par_modeld.load_state_dict(torch.load('./weights/color_multi.pt'))
 par_modeld.eval()
 color_model = DMTPARpart(par_modeld)
 
@@ -85,7 +85,9 @@ while True:
 
     tracks= tracker.update(detections,orig_img)
     present_people = set()
-
+    people_in_rois = 0
+    roi1_passages = 0
+    roi2_passages = 0
     for track in tracks:
         bbox = track[0:4].astype(int)
         id = track[4].astype(int)
@@ -108,11 +110,27 @@ while True:
         detected[id].is_in_roi2(roi2.include(bbox))
         present_people.add(id)  
         
-        if roi1.include(bbox) or roi2.include(bbox): 
-            color  = (255, 0, 0)
+        if roi1.include(bbox): 
+            color  = (255,0,0)
+        elif roi2.include(bbox):
+            color = (0,255,0)
         else:
-            color = (0, 0, 255) 
+            color = (0, 0, 255)
 
+        if detected[id].in_rois:
+            people_in_rois += 1
+
+        roi1_passages += detected[id].roi1_passages
+        roi2_passages += detected[id].roi2_passages
+
+
+
+
+        width = 80 if id >= 10 else 40
+        gender_text = 'F' if detected[id].gender == 'female' else 'M'
+        bag_text = 'Bag' if detected[id].bag else 'No Bag'
+        hat_text = 'Hat' if detected[id].hat else 'No Hat'
+        #bbox
         img = cv.rectangle(
                 img,
                 (bbox[0], bbox[1]),
@@ -120,56 +138,151 @@ while True:
                 color,
                 thickness
             )
-        cv.putText(
+        #background for ID
+        img = cv.rectangle(
                 img,
-                f'id: {id} {detected[id].gender}',
-                (bbox[0], bbox[1]-36),
-                cv.FONT_HERSHEY_SIMPLEX,
-                fontscale,
-                color,
-                1
+                (bbox[0], bbox[1]),
+                (bbox[0] + width,bbox[1] + 70),
+                (255,255,255),
+                thickness = -1
             )
+        #ID on this background
         cv.putText(
                 img,
-                f'hat:{detected[id].hat} bag:{detected[id].bag}',
-                (bbox[0], bbox[1]-23),
+                f'{id}',
+                (bbox[0], bbox[1] + 50),
                 cv.FONT_HERSHEY_SIMPLEX,
-                fontscale,
+                2,
                 color,
-                1
-            )     
+                3
+            )
+        #background for attributes
+        img = cv.rectangle(
+                img,
+                (bbox[0], bbox[3]),
+                (bbox[2] + 20,bbox[3] + 60),
+                (255,255,255),
+                thickness = -1
+            )
+        #gender  
         cv.putText(
                 img,
-                f'U:{detected[id].upper_color} L:{detected[id].lower_color}',
-                (bbox[0], bbox[1]-10),
+                f'Gender:{gender_text}',
+                (bbox[0] + 2, bbox[3] + 12),
                 cv.FONT_HERSHEY_SIMPLEX,
                 fontscale,
-                color,
-                1
-            )      
+                (0,0,0),
+                2
+            )
+        #bag hat
+        cv.putText(
+                img,
+                f'{bag_text} {hat_text}',
+                (bbox[0] + 2, bbox[3] + 29),
+                cv.FONT_HERSHEY_SIMPLEX,
+                fontscale,
+                (0,0,0),
+                2
+            )    
+        #colors
+        cv.putText(
+                img,
+                f'U-L:{detected[id].upper_color}-{detected[id].lower_color}',
+                (bbox[0] + 2, bbox[3] + 46),
+                cv.FONT_HERSHEY_SIMPLEX,
+                fontscale,
+                (0,0,0),
+                2
+            )
+    #background for general
+    img = cv.rectangle(
+            img,
+            (0,0),
+            (400,200),
+            (255,255,255),
+            thickness = -1
+        )   
+    #people in roi
+    cv.putText(
+            img,
+            f'People in ROI:{people_in_rois}',
+            (2, 46),
+            cv.FONT_HERSHEY_SIMPLEX,
+            1,
+            (0,0,0),
+            2
+        )
+    #present people
+    cv.putText(
+        img,
+        f'Total perons:{len(present_people)}',
+        (2, 80),
+        cv.FONT_HERSHEY_SIMPLEX,
+        1,
+        (0,0,0),
+        2
+    )  
+    #roi1 passages
+    cv.putText(
+        img,
+        f'Passages in ROI1:{roi1_passages}',
+        (2, 114),
+        cv.FONT_HERSHEY_SIMPLEX,
+        1,
+        (0,0,0),
+        2
+    )   
+    #roi2 passages
+    cv.putText(
+        img,
+        f'Passages in ROI2:{roi2_passages}',
+        (2, 148),
+        cv.FONT_HERSHEY_SIMPLEX,
+        1,
+        (0,0,0),
+        2
+    )
+    #ROI1
+    img = cv.rectangle(
+            img,
+            roi1.bbox[0],
+            roi1.bbox[1],
+            (0,  0,0),
+            thickness = 3
+        )
+    #ROI2
+    img = cv.rectangle(
+        img,
+        roi2.bbox[0],
+        roi2.bbox[1],
+        (0,  0,0),
+        thickness = 3
+    )
+    #ROI2 digit
+    cv.putText(
+        img,
+        f'2',
+        (roi2.bbox[0][0] + 2,roi2.bbox[0][1] + 70),
+        cv.FONT_HERSHEY_SIMPLEX,
+        3,
+        (0,0,0),
+        2
+    )
+    #ROI1 digit
+    cv.putText(
+        img,
+        f'1',
+        (roi1.bbox[0][0] + 2,roi1.bbox[0][1] + 70),
+        cv.FONT_HERSHEY_SIMPLEX,
+        3,
+        (0,0,0),
+        2
+    )
 
     for id in detected:
         if id not in present_people:
             detected[id].is_in_roi1(False)
             detected[id].is_in_roi2(False)
-
-
-    img = cv.rectangle(
-            img,
-            roi1.bbox[0],
-            roi1.bbox[1],
-            (0,  255,0),
-            3
-        )
-    
-    img = cv.rectangle(
-        img,
-        roi2.bbox[0],
-        roi2.bbox[1],
-        (0,  255,0),
-        3
-    )
-
     cv.namedWindow('People Detection Video', cv.WINDOW_NORMAL)
     # cv.resizeWindow("People Detection Video", 1080, 1920) 
     cv.imshow('People Detection Video',img)
