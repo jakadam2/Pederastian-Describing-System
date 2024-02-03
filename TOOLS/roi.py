@@ -15,8 +15,8 @@ class RoiReader:
             config = json.load(f)
             roi1_config = config['roi1']
             roi2_config = config['roi2']
-            roi1 = Roi(roi1_config['x'],roi1_config['y'],roi1_config['w'],roi1_config['h'],self._size_x,self._size_y)
-            roi2 = Roi(roi2_config['x'],roi2_config['y'],roi2_config['w'],roi2_config['h'],self._size_x,self._size_y)
+            roi1 = Roi(roi1_config['x'],roi1_config['y'],roi1_config['width'],roi1_config['height'],self._size_x,self._size_y)
+            roi2 = Roi(roi2_config['x'],roi2_config['y'],roi2_config['width'],roi2_config['height'],self._size_x,self._size_y)
             return roi1,roi2
         
 

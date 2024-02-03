@@ -20,6 +20,8 @@ from TOOLS.argparser import Parser
 from TOOLS.bg_remover import BgRemover
 from TOOLS.display import *
 
+import torchvision.models as models
+
 bgr = BgRemover()
 
 parser = Parser()
@@ -48,7 +50,7 @@ tracker = DeepOCSORT(
 )
 
 par_modeld = DMTPAR()
-par_modeld.load_state_dict(torch.load('./weights/color_multi.pt'))
+par_modeld.load_state_dict(torch.load('./weights/multitask_specific_model_with_clahe_test3.pt'))
 par_modeld.eval()
 color_model = DMTPARpart(par_modeld)
 
@@ -56,7 +58,7 @@ par_model = AMTPAR()
 par_model.load_state_dict(torch.load('./weights/multi_model.pt'))
 par_model.eval()
 attr_model = AMTPARpart(par_model)
-
+transform2 = models.ConvNeXt_Small_Weights.IMAGENET1K_V1.transforms()
 transform = rw.IMAGENET1K_V1.transforms()
 
 SPARSE = 50
@@ -102,7 +104,7 @@ while True:
             extract = extract.permute(2,0,1)
             color_extract = bgr.clahe(extract) 
             extract = transform(extract).to('cuda').unsqueeze(0)
-            color_extract = transform(color_extract).to('cuda').unsqueeze(0)
+            color_extract = transform2(color_extract).to('cuda').unsqueeze(0)
             upper_color,lower_color = color_model(color_extract)
             bag,gender,hat = attr_model(extract)
             detected[id]([upper_color,lower_color,gender,bag,hat])
