@@ -61,6 +61,7 @@ class Person:
         self.roi1_passages += 1
         self._inroi1 = False
         Person.in_roi_persons -= 1
+        Person.class_passages_roi1 += 1
 
     def _startRoi2(self) -> None:
         if self._inroi2:

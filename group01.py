@@ -62,6 +62,8 @@ transform = rw.IMAGENET1K_V1.transforms()
 SPARSE = 50
 iterator = 0
 
+video_writer = cv.VideoWriter('example_video.mp4',cv.VideoWriter_fourcc(*'mp4v'),25,(1920,1080))
+
 while True:
     if iterator == SPARSE:
         iterator = 0
@@ -124,9 +126,12 @@ while True:
             detected[id].is_in_roi2(False)
     cv.namedWindow('People Detection Video', cv.WINDOW_NORMAL)
     cv.imshow('People Detection Video',img)
-    cv.waitKey(0)
+    cv.waitKey(1)
+    video_writer.write(img)
 
 for id in detected:
     detected[id].end_rois()
       
 result_writer.write_ans(detected.values())
+
+video_writer.release()
