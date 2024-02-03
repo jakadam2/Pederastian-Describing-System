@@ -18,6 +18,7 @@ from torchvision.models import ResNet18_Weights as rw
 
 from TOOLS.argparser import Parser
 from TOOLS.bg_remover import BgRemover
+from TOOLS.display import *
 
 bgr = BgRemover()
 
@@ -47,7 +48,7 @@ tracker = DeepOCSORT(
 )
 
 par_modeld = DMTPAR()
-par_modeld.load_state_dict(torch.load('./weights/multitask_specific_model_with_clahe_test3.pt'))
+par_modeld.load_state_dict(torch.load('./weights/color_multi.pt'))
 par_modeld.eval()
 color_model = DMTPARpart(par_modeld)
 
@@ -85,7 +86,6 @@ while True:
 
     tracks= tracker.update(detections,orig_img)
     present_people = set()
-
     for track in tracks:
         bbox = track[0:4].astype(int)
         id = track[4].astype(int)
@@ -93,7 +93,8 @@ while True:
         if id not in detected.keys() or iterator == SPARSE:
             x1, y1, x2, y2 = bbox
             extract = orig_img[y1 + 1:y2 -1,x1 + 1:x2 - 1]
-            detected[id] = Person(int(id))
+            if id not in detected.keys():
+                detected[id] = Person(int(id))
             extract = orig_img[y1 + 1:y2 -1,x1 + 1:x2 - 1]
             extract = torch.from_numpy(extract.astype(np.float32))
             extract = extract.permute(2,0,1)
@@ -106,72 +107,22 @@ while True:
 
         detected[id].is_in_roi1(roi1.include(bbox))
         detected[id].is_in_roi2(roi2.include(bbox))
-        present_people.add(id)  
-        
-        if roi1.include(bbox) or roi2.include(bbox): 
-            color  = (255, 0, 0)
+        present_people.add(id)
+          
+        if roi1.include(bbox): 
+            color  = (255,0,0)
+        elif roi2.include(bbox):
+            color = (0,255,0)
         else:
-            color = (0, 0, 255) 
+            color = (0, 0, 255)
 
-        img = cv.rectangle(
-                img,
-                (bbox[0], bbox[1]),
-                (bbox[2], bbox[3]),
-                color,
-                thickness
-            )
-        cv.putText(
-                img,
-                f'id: {id} {detected[id].gender}',
-                (bbox[0], bbox[1]-36),
-                cv.FONT_HERSHEY_SIMPLEX,
-                fontscale,
-                color,
-                1
-            )
-        cv.putText(
-                img,
-                f'hat:{detected[id].hat} bag:{detected[id].bag}',
-                (bbox[0], bbox[1]-23),
-                cv.FONT_HERSHEY_SIMPLEX,
-                fontscale,
-                color,
-                1
-            )     
-        cv.putText(
-                img,
-                f'U:{detected[id].upper_color} L:{detected[id].lower_color}',
-                (bbox[0], bbox[1]-10),
-                cv.FONT_HERSHEY_SIMPLEX,
-                fontscale,
-                color,
-                1
-            )      
-
+        img = draw_person(img,detected[id],bbox,color)
+    img = draw_general(img,Person.in_roi_persons,len(present_people),Person.class_passages_roi1,Person.class_passages_roi2,roi1,roi2)
     for id in detected:
         if id not in present_people:
             detected[id].is_in_roi1(False)
             detected[id].is_in_roi2(False)
-
-
-    img = cv.rectangle(
-            img,
-            roi1.bbox[0],
-            roi1.bbox[1],
-            (0,  255,0),
-            3
-        )
-    
-    img = cv.rectangle(
-        img,
-        roi2.bbox[0],
-        roi2.bbox[1],
-        (0,  255,0),
-        3
-    )
-
     cv.namedWindow('People Detection Video', cv.WINDOW_NORMAL)
-    # cv.resizeWindow("People Detection Video", 1080, 1920) 
     cv.imshow('People Detection Video',img)
     cv.waitKey(0)
 
