@@ -97,7 +97,6 @@ class Classifier(nn.Module):
         self.avg_pool = nn.AvgPool2d((3,3))
         self.relu = nn.ReLU()
         self.flatten = nn.Flatten()
-        self.log_softmax = nn.LogSoftmax(dim=1)
 
     def forward(self, x):
         x = self.attention_module(x)
