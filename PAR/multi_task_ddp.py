@@ -103,6 +103,7 @@ class Classifier(nn.Module):
         x = self.avg_pool(x)
         x = self.flatten(x)
         x = self.dl1(x)
+
         x = self.bn3(x)
         x = self.dl4(x)
         x = self.relu(x)
