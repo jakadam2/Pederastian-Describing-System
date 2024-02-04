@@ -38,7 +38,6 @@ class AMTPAR(nn.Module):
         return_node = {'layer4.1':'relu_1'}
         model = models.resnet18(models.ResNet18_Weights.IMAGENET1K_V1).to(device)
         self.extractor = create_feature_extractor(model, return_node)
-        self.extractor = create_feature_extractor(model, return_node)
         self.upper_color = AMTPartClassifier(11).to(device)
         self.lower_color = AMTPartClassifier(11).to(device)
         self.bag = AMTPartClassifier(2).to(device)

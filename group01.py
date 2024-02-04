@@ -10,7 +10,7 @@ from TOOLS.roi import RoiReader
 
 import cv2 as cv
 from ultralytics import YOLO
-from boxmot import DeepOCSORT
+from boxmot import DeepOCSORT,BoTSORT
 import torch
 
 from PAR.multi_task import DMTPAR,DMTPARpart,AMTPAR,AMTPARpart
@@ -43,11 +43,17 @@ roi1,roi2 = RoiReader(1080,1920).load(arguments.configuration)
 detected = {}
 result_writer = ResultWriter(arguments.results)
 
-tracker = DeepOCSORT( 
-    model_weights= Path('./weights/osnet_ain_x1_0_msmt17.pt'),
-    device='cuda:0',
-    fp16=True,
-)
+#tracker = DeepOCSORT( 
+#    model_weights= Path('./weights/osnet_ain_x1_0_msmt17.pt'),
+#    device='cuda:0',
+#    fp16=True,
+#    iou_threshold=0.2,
+#    det_thresh=0.5,
+#    min_hits=12,
+#)
+
+tracker = BoTSORT(model_weights= Path('./weights/osnet_ain_x1_0_msmt17.pt'),new_track_thresh=0.7,match_thresh=0.95,device='cuda:0',fp16=True,appearance_thresh=0.35)
+
 
 par_modeld = DMTPAR()
 par_modeld.load_state_dict(torch.load('./weights/multitask_specific_model_with_clahe_test3.pt'))

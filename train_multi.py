@@ -1,7 +1,7 @@
 import torch.nn as nn
 import torch
 import torchvision.models as models
-from PAR.multi_task import MTLoss,MTPAR
+from PAR.multi_task import AMTLoss,AMTPAR
 from PAR.par_utils import MTImageDataset
 
 
@@ -28,9 +28,9 @@ def train_one_epoch(train_loader,optimizer,model,loss_fn):
 
 
 def train(epochs,LR = 10 ** -3) -> None:
-    f = open('./raports/train_multi_raport.txt','w+')
-    criterion = MTLoss()
-    model = MTPAR()
+    f = open('./raports/train_multi_raport_final.txt','w+')
+    criterion = AMTLoss()
+    model = AMTPAR()
     optimizer = torch.optim.AdamW(model.parameters(),lr = LR)
     transform = models.ResNet18_Weights.IMAGENET1K_V1.transforms()
     train_data = MTImageDataset('./data/par_datasets/training_set.txt','./data/par_datasets/training_set' ,transform=transform)
@@ -44,10 +44,11 @@ def train(epochs,LR = 10 ** -3) -> None:
         epoch_loss = train_one_epoch(train_loader,optimizer,model,criterion)
         print(f'LOSS: {epoch_loss}')
         f.write(f'LOSS: {epoch_loss}\n')
+        torch.save(model.state_dict(),f'./weights/final/epoch{epoch + 1}.pt')
     print('TRAINING FINISHED')
     f.write('TRAINING FINISHED')
     f.close()
-    torch.save(model.state_dict(),'./weights/multi_model.pt')
+    torch.save(model.state_dict(),'./weights/multi_model_final.pt')
 
 if __name__ == '__main__':
-    train(13)
+    train(20)
