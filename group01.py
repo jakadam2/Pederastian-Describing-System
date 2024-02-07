@@ -52,11 +52,10 @@ result_writer = ResultWriter(arguments.results)
 #    min_hits=12,
 #)
 
-tracker = BoTSORT(model_weights= Path('./weights/osnet_ain_x1_0_msmt17.pt'),new_track_thresh=0.7,match_thresh=0.95,device='cuda:0',fp16=True,appearance_thresh=0.35)
-
+tracker = BoTSORT(model_weights= Path('./weights/osnet_ain_x1_0_msmt17.pt'),new_track_thresh=0.7,match_thresh=0.95,device='cuda:0',fp16=True,appearance_thresh=0.4,proximity_thresh=0.85)
 
 par_modeld = DMTPAR()
-par_modeld.load_state_dict(torch.load('./weights/multitask_specific_model_with_clahe_test3.pt'))
+par_modeld.load_state_dict(torch.load('./weights/color_multi.pt'))
 par_modeld.eval()
 color_model = DMTPARpart(par_modeld)
 
