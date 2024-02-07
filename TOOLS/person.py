@@ -17,15 +17,19 @@ class Person:
     _bag_dict = {0:False,1:True}
     _hat_dict = {0:False,1:True}
     _annoucer = TextAnnoucer()
-    _tollerance_time = 5
-    _chooser = SamePredictChooser
+    _tollerance_time = 15
+    _chooser = MaxPredictChooser
+    class_passages_roi1 = 0
+    class_passages_roi2 = 0
+    in_roi_persons = 0
+    _fps = 25
 
     def __init__(self,id) -> None:
         self.id = id
-        self.roi1_time = 0.0
-        self.roi2_time = 0.0
-        self.roi1_passes = 0
-        self.roi2_passes = 0
+        self.roi1_persistence_time = 0.0
+        self.roi2_persistence_time = 0.0
+        self.roi1_passages = 0
+        self.roi2_passages = 0
         self._inroi1 = False
         self._inroi2 = False
         self._pass_time1 = 0
@@ -37,77 +41,75 @@ class Person:
         self._lower_chooser = self._chooser(11,self._color_dict)
         
     def __call__(self, predicts) -> None:
-        predicts = predicts.squeeze(0) 
-        self.upper_color = self._upper_chooser(predicts[0:11])
-        self.lower_color = self._lower_chooser(predicts[11:22])
-        self.gender = self._gender_chooser(predicts[22:24])
-        self.hat = self._hat_chooser(predicts[24:26])
-        self.bag = self._bag_chooser(predicts[26:28])
-
-    def __str__(self) -> str:
-        return f'Person({self.id})'
-    
-    def __repr__(self) -> str:
-        return f'Person({self.id})'
+        self.upper_color = self._upper_chooser(predicts[0].squeeze(0))
+        self.lower_color = self._lower_chooser(predicts[1].squeeze(0))
+        self.gender = self._gender_chooser(predicts[2].squeeze(0))
+        self.hat = self._hat_chooser(predicts[3].squeeze(0))
+        self.bag = self._bag_chooser(predicts[4].squeeze(0))
      
     def _startRoi1(self) -> None:
         if self._inroi1:
             raise LookupError(f'{self} is already in roi1')
-        self._roi1_ptime = perf_counter()
         self._inroi1 = True
         self._annoucer(self.id,'roi1')
+        Person.in_roi_persons += 1
+        Person.class_passages_roi1 += 1
+        self.roi1_passages += 1
 
     def _stopRoi1(self) -> None:
         if not self._inroi1:
             raise LookupError(f'{self} is not in roi1')
-        
-        self.roi1_time += (perf_counter() - self._roi1_ptime)
-        self.roi1_passes += 1
         self._inroi1 = False
+        Person.in_roi_persons -= 1
 
     def _startRoi2(self) -> None:
         if self._inroi2:
             raise LookupError(f'{self} is already in roi2')
-        self._roi2_ptime = perf_counter()
         self._inroi2 = True
         self._annoucer(self.id,'roi2')
+        Person.in_roi_persons += 1
+        self.roi2_passages += 1
+        Person.class_passages_roi2 += 1
 
     def _stopRoi2(self) -> None:
         if not self._inroi2:
-            raise LookupError(f'{self} is not in roi2')
-        
-        self.roi2_time += (perf_counter() - self._roi2_ptime)
-        self.roi2_passes += 1
+            raise LookupError(f'{self.id} is not in roi2')
+        Person.in_roi_persons -= 1
         self._inroi2 = False
 
     def is_in_roi1(self,presence) -> None:
         if presence == self._inroi1:
+            if presence:
+                self.roi1_persistence_time += 1/Person._fps
             return
-        
         elif presence:
             self._pass_time1 = 0
+            self.roi1_persistence_time += 1/Person._fps
             self._startRoi1()
-
         else:
             self._pass_time1 += 1
             if self._pass_time1 == self._tollerance_time:
                 self._stopRoi1()
 
+
     def is_in_roi2(self,presence) -> None:
         if presence == self._inroi2:
+            if presence:
+                self.roi2_persistence_time += 1/Person._fps
             return
-        
         elif presence:
             self._pass_time2 = 0
             self._startRoi2()
-
+            self.roi2_persistence_time += (1/Person._fps)
         else:
             self._pass_time2 += 1
             if self._pass_time2 == self._tollerance_time:
                 self._stopRoi2()
 
     def end_rois(self):
-        if self._inroi1:
-            self._stopRoi1()
-        if self._inroi2:
-            self._stopRoi2()
+        self._inroi1 = False
+        self._inroi2 = False
+
+    @property
+    def in_rois(self):
+        return self._inroi1 or self._inroi2

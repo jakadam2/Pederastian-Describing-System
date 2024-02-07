@@ -13,16 +13,3 @@ class Parser():
     def parse(self): 
         args = self.parser.parse_args()
         return args
-    
-
-# --------------- USAGE ----------------------
-
-# def main(): 
-#     pars = parser()
-#     args = pars.parse()
-#     print('video = '+args.video)
-#     print('configuration = '+args.configuration)
-#     print('results = '+args.results)
-
-# if __name__ == '__main__': 
-#     main()

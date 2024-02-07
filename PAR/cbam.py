@@ -53,4 +53,3 @@ class CBAM(nn.Module):
         attention = self.channel_module(x)
         attention = self.spatial_module(attention)
         return attention + x
-

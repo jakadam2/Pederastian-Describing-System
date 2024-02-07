@@ -6,7 +6,7 @@ import matplotlib.gridspec as gridspec
 
 class ImageTransformations:
 
-    def __init__(self, image_path_or_object, RGB=True, read_image_from_file=True):
+    def __init__(self, image_path_or_object=None, RGB=True, read_image_from_file=True):
         """
         - put RGB=True to process the image as an RGB image (if it is) or otherwise put RGB=False to process the image as a Grayscale
         image (if is already in grayscale, it remains in grayscale, otherwise if it is in RGB scale it will be converted in Grayscale)
@@ -25,6 +25,10 @@ class ImageTransformations:
             else:
                 self.image = image_path_or_object
                 self.RGB = False
+
+    def set_image(self, image):
+        self.image = image
+        return image
 
     def show_image(self):
         if self.image is None:
@@ -115,7 +119,7 @@ class ImageTransformations:
            g_clahe_equalized = cv2.createCLAHE(clipLimit=clip_limit, tileGridSize=grid_size).apply(g)
            b_clahe_equalized = cv2.createCLAHE(clipLimit=clip_limit, tileGridSize=grid_size).apply(b)
            return ImageTransformations(cv2.merge([r_clahe_equalized, g_clahe_equalized, b_clahe_equalized]),self.RGB,False)
-
+        
     def binary_treshold(self,treshold):
         if self.RGB==False:
             return ImageTransformations(cv2.threshold(self.image, treshold, 255, cv2.THRESH_BINARY)[1],self.RGB,False)
@@ -312,7 +316,18 @@ class ImageTransformations:
         return ImageTransformations(cv2.Canny(self.image, lower_treshold, upper_treshold),self.RGB,False)
 
 
+    def clahe_v2(self, clip_limit=2.0,grid_size=(8,8)):
+        b_channel, g_channel, r_channel = cv2.split(self.image)
 
+        # Apply CLAHE to each channel
+        clahe = cv2.createCLAHE(clip_limit, grid_size)
+        clahe_b_channel = clahe.apply(b_channel)
+        clahe_g_channel = clahe.apply(g_channel)
+        clahe_r_channel = clahe.apply(r_channel)
+
+        # Merge the channels back to form the CLAHE-enhanced BGR image
+        self.image = cv2.merge([clahe_b_channel, clahe_g_channel, clahe_r_channel])
+        return self.image
 
 
 
@@ -379,13 +394,20 @@ def shot_two_images(input_image,image2, space=0.05):
 
 
 
+
+
+
+
+
 #TRYING
 
 #When initialize the ImageTransormations object use the image path as first parameter, and indicate True or False if the image is RGB (True) or Grayscale (False)
 #Don't touch other parameter of the constructor    
-frame= ImageTransformations('input_image_RGB.jpg',True)
-transform=frame.laplacian_filter().addition(20).erode(3)
-show_images_with_histograms(frame.image,transform.image)
+    
+# frame= ImageTransformations('test.png',True)
+# transform=frame.clahe()
+# show_images_with_histograms(frame.image,transform.image)
+
 #shot_two_images('input_image_RGB.jpg',frame.addition(50).clamping([30],[140]).image)
 
 

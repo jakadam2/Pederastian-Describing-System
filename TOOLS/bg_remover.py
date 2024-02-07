@@ -2,21 +2,28 @@ import torch
 import torchvision.transforms as T
 from torchvision import models
 from PIL import Image
+import cv2
+import numpy as np
+from TOOLS.image_transformations import ImageTransformations
 # I also needed to install: pip install --upgrade typing-extensions
 
 
 class BgRemover(): 
+
+    _GREEN = [0, 1, 0]
+    _BLACK = [0, 0, 0]
+    _WHITE = [1, 1, 1]
     
-    def __init__(self): 
-        # Loads the model 
-        model = models.segmentation.deeplabv3_resnet101(pretrained=True)
-        model.eval()
-        self.model = model
+    def __init__(self,model_init = False): 
+        if model_init:
+            model = models.segmentation.deeplabv3_resnet101(pretrained=True)
+            model.eval()
+            self.model = model
         # simple transform that makes an image to tensor 
         self.simple_transform = T.Compose([T.ToTensor()])
-        # transform that normalize the tensor so it's ready for the model 
-        # self.normalization_transform = T.Compose([T.ToPILImage(), T.ToTensor(), T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])])
+        # transform that normalizes the tensor so it's ready for the model 
         self.normalization_transform = T.Compose([T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])])
+        self.imTrans = ImageTransformations(True, read_image_from_file=False)
 
     def _img2tensor(self, img_path, normalization=True):
         img = Image.open(img_path).convert("RGB")
@@ -66,29 +73,28 @@ class BgRemover():
         mask = self._getMask(normalized_tensor)
         out = self._bgRemove(in_tensor, mask, colour)
         return out
-
     
-# ----------- USAGE ---------------
+    def clahe(self, tensor):
+        # prepares the tensor for opencv
+        img = self._tensor2img(tensor)
+        img = np.array(img)
+        img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+        # applies clahe 
+        img = self.imTrans.set_image(img)
+        img = self.imTrans.clahe_v2()
+        # transforms the image back to a tensor of the correct type 
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        img = img.astype(np.float32) / 255.0
+        tensor = torch.from_numpy(img)
+        tensor = tensor.permute(2, 0, 1)
+        return tensor
 
-# def main(): 
-#     img_path = 'test.png'
-#     out_path = 'output.jpg'
-#     out_tensor_path = 'out_tensor.jpg'
-#     green=[0, 1, 0]
-#     black=[0, 0, 0]
-#     white=[1, 1, 1]
-
-#     bgr = bgRemover()
-#     # from image 
-#     bgr.bgr_img(img_path, out_path, white)
-#     # from tensor 
-#     tensor = bgr._img2tensor(img_path, normalization=False) # creates a tensr for test 
-#     out = bgr.bgr_tensor(tensor, green)
-#     bgr._tensor2img(out, out_tensor_path)
-
-
-# if __name__ == '__main__':
-#     main()
-
-
-
+    # deprecato da me, non lo usate 
+    def equalize(self, image_tensor):
+        image_tensor = torch.clamp(image_tensor, 0, 1)
+        image_tensor = (image_tensor[0, :] * 255).byte()
+        # image_tensor = T.functional.to_tensor(image_tensor)
+        # transform = T.ColorJitter(saturation=4)  # You can adjust the saturation factor
+        # image_tensor = transform(image_tensor)
+        equalized_image = T.functional.equalize(image_tensor)
+        return equalized_image.unsqueeze(0)

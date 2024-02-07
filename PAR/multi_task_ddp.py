@@ -38,6 +38,7 @@ class AMTPAR(nn.Module):
         return_node = {'layer4.1':'relu_1'}
         model = models.resnet18(models.ResNet18_Weights.IMAGENET1K_V1).to(device)
         self.extractor = create_feature_extractor(model, return_node)
+        self.extractor = create_feature_extractor(model, return_node)
         self.upper_color = AMTPartClassifier(11).to(device)
         self.lower_color = AMTPartClassifier(11).to(device)
         self.bag = AMTPartClassifier(2).to(device)
@@ -89,37 +90,23 @@ class Classifier(nn.Module):
 
     def __init__(self, num_classes=11):
         super(Classifier,self).__init__()
-        self.attention_module = CBAM(2048)
-        self.dl1 = nn.Linear(8192,1024)
-        self.bn1 = nn.BatchNorm1d(1024)
-        self.dl2 = nn.Linear(1024,512)
-        self.bn2 = nn.BatchNorm1d(512)
-        self.dl3 = nn.Linear(512,128)
+        self.attention_module = CBAM(512)
+        self.dl1 = nn.Linear(2048,128)
         self.bn3 = nn.BatchNorm1d(128)
         self.dl4 = nn.Linear(128,64)
-        self.dropout = nn.Dropout(0.3)
         self.avg_pool = nn.AvgPool2d((3,3))
         self.relu = nn.ReLU()
         self.flatten = nn.Flatten()
-        self.log_softmax = nn.LogSoftmax(dim=1)
 
     def forward(self, x):
         x = self.attention_module(x)
         x = self.avg_pool(x)
         x = self.flatten(x)
-        x = self.dropout(x)
         x = self.dl1(x)
-        x = self.bn1(x)
-        x = self.dropout(x)
-        x = self.dl2(x)
-        x = self.bn2(x)
-        x = self.dropout(x)
-        x = self.dl3(x)
+
         x = self.bn3(x)
-        x = self.dropout(x)
         x = self.dl4(x)
         x = self.relu(x)
-        x = self.dropout(x)
         return x
 
 

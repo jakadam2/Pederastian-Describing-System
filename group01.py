@@ -10,13 +10,19 @@ from TOOLS.roi import RoiReader
 
 import cv2 as cv
 from ultralytics import YOLO
-from boxmot import DeepOCSORT
+from boxmot import DeepOCSORT,BoTSORT
 import torch
 
-from PAR.multi_task import MTPAR
+from PAR.multi_task import DMTPAR,DMTPARpart,AMTPAR,AMTPARpart
 from torchvision.models import ResNet18_Weights as rw
 
 from TOOLS.argparser import Parser
+from TOOLS.bg_remover import BgRemover
+from TOOLS.display import *
+
+import torchvision.models as models
+
+bgr = BgRemover()
 
 parser = Parser()
 arguments = parser.parse()
@@ -37,19 +43,33 @@ roi1,roi2 = RoiReader(1080,1920).load(arguments.configuration)
 detected = {}
 result_writer = ResultWriter(arguments.results)
 
-tracker = DeepOCSORT( 
-    model_weights= Path('./weights/osnet_ain_x1_0_msmt17.pt'), # which ReID model to use
-    device='cuda:0',
-    fp16=True,
-)
+#tracker = DeepOCSORT( 
+#    model_weights= Path('./weights/osnet_ain_x1_0_msmt17.pt'),
+#    device='cuda:0',
+#    fp16=True,
+#    iou_threshold=0.2,
+#    det_thresh=0.5,
+#    min_hits=12,
+#)
 
-par_model = MTPAR()
+tracker = BoTSORT(model_weights= Path('./weights/osnet_ain_x1_0_msmt17.pt'),new_track_thresh=0.7,match_thresh=0.95,device='cuda:0',fp16=True,appearance_thresh=0.4,proximity_thresh=0.85)
+
+par_modeld = DMTPAR()
+par_modeld.load_state_dict(torch.load('./weights/color_multi.pt'))
+par_modeld.eval()
+color_model = DMTPARpart(par_modeld)
+
+par_model = AMTPAR()
 par_model.load_state_dict(torch.load('./weights/multi_model.pt'))
 par_model.eval()
+attr_model = AMTPARpart(par_model)
+transform2 = models.ConvNeXt_Small_Weights.IMAGENET1K_V1.transforms()
 transform = rw.IMAGENET1K_V1.transforms()
 
 SPARSE = 50
 iterator = 0
+
+video_writer = cv.VideoWriter('example_video.mp4',cv.VideoWriter_fourcc(*'mp4v'),25,(1920,1080))
 
 while True:
     if iterator == SPARSE:
@@ -75,93 +95,50 @@ while True:
 
     tracks= tracker.update(detections,orig_img)
     present_people = set()
-
     for track in tracks:
         bbox = track[0:4].astype(int)
         id = track[4].astype(int)
 
-        if id not in detected.keys() or iterator == SPARSE: # that means that we see this pearson first time 
+        if id not in detected.keys() or iterator == SPARSE:
             x1, y1, x2, y2 = bbox
             extract = orig_img[y1 + 1:y2 -1,x1 + 1:x2 - 1]
             if id not in detected.keys():
-                detected[id] = Person(int(id)) # this object should store info about person
+                detected[id] = Person(int(id))
             extract = orig_img[y1 + 1:y2 -1,x1 + 1:x2 - 1]
             extract = torch.from_numpy(extract.astype(np.float32))
             extract = extract.permute(2,0,1)
+            color_extract = bgr.clahe(extract) 
             extract = transform(extract).to('cuda').unsqueeze(0)
-            predicts = par_model(extract)
-            detected[id](predicts)
+            color_extract = transform2(color_extract).to('cuda').unsqueeze(0)
+            upper_color,lower_color = color_model(color_extract)
+            bag,gender,hat = attr_model(extract)
+            detected[id]([upper_color,lower_color,gender,bag,hat])
 
         detected[id].is_in_roi1(roi1.include(bbox))
         detected[id].is_in_roi2(roi2.include(bbox))
-        present_people.add(id)  
-        
-        if roi1.include(bbox) or roi2.include(bbox): 
-            color  = (255, 0, 0)
+        present_people.add(id)
+          
+        if roi1.include(bbox): 
+            color  = (255,0,0)
+        elif roi2.include(bbox):
+            color = (0,255,0)
         else:
-            color = (0, 0, 255) 
+            color = (0, 0, 255)
 
-        img = cv.rectangle(
-                img,
-                (bbox[0], bbox[1]),
-                (bbox[2], bbox[3]),
-                color,
-                thickness
-            )
-        cv.putText(
-                img,
-                f'id: {id} {detected[id].gender}',
-                (bbox[0], bbox[1]-36),
-                cv.FONT_HERSHEY_SIMPLEX,
-                fontscale,
-                color,
-                1
-            )
-        cv.putText(
-                img,
-                f'hat:{detected[id].hat} bag:{detected[id].bag}',
-                (bbox[0], bbox[1]-23),
-                cv.FONT_HERSHEY_SIMPLEX,
-                fontscale,
-                color,
-                1
-            )     
-        cv.putText(
-                img,
-                f'U:{detected[id].upper_color} L:{detected[id].lower_color}',
-                (bbox[0], bbox[1]-10),
-                cv.FONT_HERSHEY_SIMPLEX,
-                fontscale,
-                color,
-                1
-            )      
-
+        img = draw_person(img,detected[id],bbox,color)
+    img = draw_general(img,Person.in_roi_persons,len(present_people),Person.class_passages_roi1,Person.class_passages_roi2,roi1,roi2)
     for id in detected:
         if id not in present_people:
             detected[id].is_in_roi1(False)
             detected[id].is_in_roi2(False)
-
-
-    img = cv.rectangle(
-            img,
-            roi1.bbox[0],
-            roi1.bbox[1],
-            (0,  255,0),
-            3
-        )
-    
-    img = cv.rectangle(
-        img,
-        roi2.bbox[0],
-        roi2.bbox[1],
-        (0,  255,0),
-        3
-    )
-
+    cv.namedWindow('People Detection Video', cv.WINDOW_NORMAL)
     cv.imshow('People Detection Video',img)
     cv.waitKey(1)
+    video_writer.write(img)
 
 for id in detected:
     detected[id].end_rois()
       
 result_writer.write_ans(detected.values())
+
+video_writer.release()
