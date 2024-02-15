@@ -43,24 +43,15 @@ roi1,roi2 = RoiReader(1080,1920).load(arguments.configuration)
 detected = {}
 result_writer = ResultWriter(arguments.results)
 
-#tracker = DeepOCSORT( 
-#    model_weights= Path('./weights/osnet_ain_x1_0_msmt17.pt'),
-#    device='cuda:0',
-#    fp16=True,
-#    iou_threshold=0.2,
-#    det_thresh=0.5,
-#    min_hits=12,
-#)
-
 tracker = BoTSORT(model_weights= Path('./weights/osnet_ain_x1_0_msmt17.pt'),new_track_thresh=0.7,match_thresh=0.95,device='cuda:0',fp16=True,appearance_thresh=0.4,proximity_thresh=0.85)
 
 par_modeld = DMTPAR()
-par_modeld.load_state_dict(torch.load('./weights/color_multi.pt'))
+par_modeld.load_state_dict(torch.load('./weights/color_model.pt'))
 par_modeld.eval()
 color_model = DMTPARpart(par_modeld)
 
 par_model = AMTPAR()
-par_model.load_state_dict(torch.load('./weights/multi_model.pt'))
+par_model.load_state_dict(torch.load('./weights/attr_model.pt'))
 par_model.eval()
 attr_model = AMTPARpart(par_model)
 transform2 = models.ConvNeXt_Small_Weights.IMAGENET1K_V1.transforms()
