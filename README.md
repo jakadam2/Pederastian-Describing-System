@@ -11,7 +11,7 @@ System has implemented few interesting features as strategies of choosing the be
 ## Installation
 Clone project package
 ```bash
-git clone https://github.com/jakadam2/AVProject.git
+git clone https://github.com/jakadam2/Pederastian-Describing-System.git
 ```
 Use the package manager [pip](https://pip.pypa.io/en/stable/) to install.
 
